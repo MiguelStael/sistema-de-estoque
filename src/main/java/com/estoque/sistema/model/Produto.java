@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "produtos")
-@Data 
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Produto {
@@ -31,6 +31,12 @@ public class Produto {
     private Integer quantidade;
 
     @Column(name = "url_imagem")
-    private String urlImagem; 
+    private String urlImagem;
 
+    @Column(nullable = false)
+    private Boolean disponivel = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private CategoriaProduto categoria;
 }

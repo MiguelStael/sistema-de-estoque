@@ -15,8 +15,8 @@ import java.util.UUID;
 @Service
 public class ImageStorageService {
 
-    private static final int IMAGE_WIDTH  = 800;
-    private static final int IMAGE_HEIGHT = 800;
+    private static final int IMAGE_WIDTH  = 300;
+    private static final int IMAGE_HEIGHT = 300;
 
     private final Path fileStorageLocation;
 
@@ -49,7 +49,7 @@ public class ImageStorageService {
                     .size(IMAGE_WIDTH, IMAGE_HEIGHT)
                     .keepAspectRatio(true)
                     .outputFormat("jpg")
-                    .outputQuality(0.85)
+                    .outputQuality(0.80)
                     .toFile(targetLocation.toFile());
         } catch (IOException ex) {
             throw new RuntimeException("Não foi possível processar a imagem: " + originalFileName, ex);
