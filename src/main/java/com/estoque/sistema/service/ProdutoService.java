@@ -20,7 +20,7 @@ public class ProdutoService {
         this.imageStorageService = imageStorageService;
     }
 
-    public Produto criarProduto(Produto produto, MultipartFile imagem) {
+    public Produto criarProduto(@org.springframework.lang.NonNull Produto produto, MultipartFile imagem) {
         if (imagem != null && !imagem.isEmpty()) {
             String nomeArquivo = imageStorageService.storeFile(imagem);
             String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -36,20 +36,32 @@ public class ProdutoService {
         return produtoRepository.findAll();
     }
 
-    public Optional<Produto> buscarPorId(Long id) {
+    public List<Produto> listarCardapioPublico() {
+        return produtoRepository.findAllByDisponivelTrue();
+    }
+
+    public Optional<Produto> buscarPorId(@org.springframework.lang.NonNull Long id) {
         return produtoRepository.findById(id);
     }
 
-    public void deletarProduto(Long id) {
+    public Produto alterarDisponibilidade(@org.springframework.lang.NonNull Long id, boolean disponivel) {
+        Produto produto = produtoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Produto não localizado."));
+        produto.setDisponivel(disponivel);
+        return produtoRepository.save(produto);
+    }
+
+    public void deletarProduto(@org.springframework.lang.NonNull Long id) {
         produtoRepository.deleteById(id);
     }
 
-    public Produto atualizarProduto(Long id, Produto produtoAtualizado, MultipartFile novaImagem) {
+    public Produto atualizarProduto(@org.springframework.lang.NonNull Long id, @org.springframework.lang.NonNull Produto produtoAtualizado, MultipartFile novaImagem) {
         return produtoRepository.findById(id).map(produto -> {
             produto.setNome(produtoAtualizado.getNome());
             produto.setDescricao(produtoAtualizado.getDescricao());
             produto.setPreco(produtoAtualizado.getPreco());
             produto.setQuantidade(produtoAtualizado.getQuantidade());
+            produto.setCategoria(produtoAtualizado.getCategoria());
 
             if (novaImagem != null && !novaImagem.isEmpty()) {
                 String nomeArquivo = imageStorageService.storeFile(novaImagem);
