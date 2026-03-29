@@ -1,30 +1,17 @@
-### IntelliJ IDEA ###
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
-.kotlin
+HELP.md
+target/
 
-### Eclipse ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
+# Pastas de IDEs que não precisam ir pro Git
+.idea/
 .vscode/
+*.iml
+.classpath
+.project
+.settings/
 
-### Mac OS ###
+# Onde as imagens do sistema de estoque são salvas (evita subirmos fotos pesadas de testes pro GitHub)
+uploads/
+
+# Arquivos de log e SO
+*.log
 .DS_Store
