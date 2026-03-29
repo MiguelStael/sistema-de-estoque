@@ -1,5 +1,6 @@
 package com.estoque.sistema.service;
 
+import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -9,11 +10,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 @Service
 public class ImageStorageService {
+
+    private static final int IMAGE_WIDTH  = 800;
+    private static final int IMAGE_HEIGHT = 800;
 
     private final Path fileStorageLocation;
 
@@ -33,26 +36,25 @@ public class ImageStorageService {
         }
 
         String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
-        
-        try {
-            if (originalFileName.contains("..")) {
-                throw new RuntimeException("Caminho inválido: " + originalFileName);
-            }
 
-            String fileExtension = "";
-            int i = originalFileName.lastIndexOf('.');
-            if (i > 0) {
-                fileExtension = originalFileName.substring(i);
-            }
-
-            String newFileName = UUID.randomUUID().toString() + fileExtension;
-            Path targetLocation = this.fileStorageLocation.resolve(newFileName);
-            
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-
-            return newFileName;
-        } catch (IOException ex) {
-            throw new RuntimeException("Não foi possível salvar " + originalFileName, ex);
+        if (originalFileName.contains("..")) {
+            throw new RuntimeException("Caminho inválido: " + originalFileName);
         }
+
+        String newFileName = UUID.randomUUID() + ".jpg";
+        Path targetLocation = this.fileStorageLocation.resolve(newFileName);
+
+        try {
+            Thumbnails.of(file.getInputStream())
+                    .size(IMAGE_WIDTH, IMAGE_HEIGHT)
+                    .keepAspectRatio(true)
+                    .outputFormat("jpg")
+                    .outputQuality(0.85)
+                    .toFile(targetLocation.toFile());
+        } catch (IOException ex) {
+            throw new RuntimeException("Não foi possível processar a imagem: " + originalFileName, ex);
+        }
+
+        return newFileName;
     }
 }
