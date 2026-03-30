@@ -15,8 +15,7 @@ import java.util.UUID;
 @Service
 public class ImageStorageService {
 
-    private static final int IMAGE_WIDTH  = 300;
-    private static final int IMAGE_HEIGHT = 300;
+    private static final int IMAGE_WIDTH  = 800;
 
     private final Path fileStorageLocation;
 
@@ -35,20 +34,25 @@ public class ImageStorageService {
             return null;
         }
 
-        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
+        String originalFileName = file.getOriginalFilename();
+        if (originalFileName == null) {
+            throw new RuntimeException("Nome do arquivo inválido.");
+        }
+        originalFileName = StringUtils.cleanPath(originalFileName);
 
         if (originalFileName.contains("..")) {
             throw new RuntimeException("Caminho inválido: " + originalFileName);
         }
 
-        String newFileName = UUID.randomUUID() + ".jpg";
+        String fileNameWithoutExtension = UUID.randomUUID().toString();
+        String newFileName = fileNameWithoutExtension + ".webp";
         Path targetLocation = this.fileStorageLocation.resolve(newFileName);
 
         try {
             Thumbnails.of(file.getInputStream())
-                    .size(IMAGE_WIDTH, IMAGE_HEIGHT)
+                    .width(IMAGE_WIDTH)
                     .keepAspectRatio(true)
-                    .outputFormat("jpg")
+                    .outputFormat("webp")
                     .outputQuality(0.80)
                     .toFile(targetLocation.toFile());
         } catch (IOException ex) {

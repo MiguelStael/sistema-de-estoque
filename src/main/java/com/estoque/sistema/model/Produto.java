@@ -4,11 +4,17 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "produtos")
+@SQLDelete(sql = "UPDATE produtos SET ativo = false WHERE id = ? AND version = ?")
+@SQLRestriction("ativo = true")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,6 +23,15 @@ public class Produto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    private Long version;
+
+    @Column(nullable = false)
+    private Boolean ativo = true;
+
+    @OneToMany(mappedBy = "produto", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItemFichaTecnica> itensFicha = new ArrayList<>();
 
     @Column(nullable = false, length = 150)
     private String nome;

@@ -1,18 +1,28 @@
 package com.estoque.sistema.controller;
 
-import com.estoque.sistema.model.Produto;
+import com.estoque.sistema.dto.ProdutoRequestDTO;
+import com.estoque.sistema.dto.ProdutoResponseDTO;
 import com.estoque.sistema.service.ProdutoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
 @RestController
+@RequestMapping("/estoque/produtos")
+@Tag(name = "Produtos", description = "Gestão do cardápio e catálogo de produtos")
 public class ProdutoController {
 
     private final ProdutoService produtoService;
@@ -21,82 +31,62 @@ public class ProdutoController {
         this.produtoService = produtoService;
     }
 
+    @Operation(summary = "Cardápio público")
     @GetMapping("/cardapio")
-    public ResponseEntity<List<Produto>> cardapioPublico() {
+    public ResponseEntity<List<ProdutoResponseDTO>> cardapioPublico() {
         return ResponseEntity.ok(produtoService.listarCardapioPublico());
     }
 
-    @GetMapping("/produtos")
-    public ResponseEntity<List<Produto>> listarTodos() {
-        return ResponseEntity.ok(produtoService.listarTodos());
+    @Operation(summary = "Listar produtos (paginado)")
+    @GetMapping
+    public ResponseEntity<Page<ProdutoResponseDTO>> listarTodos(
+            @Parameter(hidden = true) @PageableDefault(size = 10, sort = "nome") @NonNull Pageable pageable
+    ) {
+        return ResponseEntity.ok(produtoService.listarTodos(pageable));
     }
 
-    @GetMapping("/produtos/{id}")
-    public ResponseEntity<Produto> buscarPorId(@PathVariable @org.springframework.lang.NonNull Long id) {
+    @Operation(summary = "Buscar produto por ID")
+    @GetMapping("/{id}")
+    public ResponseEntity<ProdutoResponseDTO> buscarPorId(@PathVariable @NonNull Long id) {
         return produtoService.buscarPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping(value = "/produtos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Produto> criar(
-            @RequestParam("nome") String nome,
-            @RequestParam(value = "descricao", required = false) String descricao,
-            @RequestParam("preco") BigDecimal preco,
-            @RequestParam("quantidade") Integer quantidade,
-            @RequestParam("categoria") String categoria,
-            @RequestParam(value = "imagem", required = false) MultipartFile imagem
+    @Operation(summary = "Criar produto")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProdutoResponseDTO> criar(
+            @RequestPart("produto") @Valid @NonNull ProdutoRequestDTO dto,
+            @RequestPart(value = "imagem", required = false) MultipartFile imagem
     ) {
-        Produto novo = new Produto();
-        novo.setNome(nome);
-        novo.setDescricao(descricao);
-        novo.setPreco(preco);
-        novo.setQuantidade(quantidade);
-        novo.setCategoria(com.estoque.sistema.model.CategoriaProduto.valueOf(categoria.toUpperCase()));
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(produtoService.criarProduto(novo, imagem));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(produtoService.criarProduto(dto, imagem));
     }
 
-    @PutMapping(value = "/produtos/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Produto> atualizar(
-            @PathVariable @org.springframework.lang.NonNull Long id,
-            @RequestParam("nome") String nome,
-            @RequestParam(value = "descricao", required = false) String descricao,
-            @RequestParam("preco") BigDecimal preco,
-            @RequestParam("quantidade") Integer quantidade,
-            @RequestParam("categoria") String categoria,
-            @RequestParam(value = "imagem", required = false) MultipartFile imagem
+    @Operation(summary = "Atualizar produto")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProdutoResponseDTO> atualizar(
+            @PathVariable @NonNull Long id,
+            @RequestPart("produto") @Valid @NonNull ProdutoRequestDTO dto,
+            @RequestPart(value = "imagem", required = false) MultipartFile imagem
     ) {
-        Produto dados = new Produto();
-        dados.setNome(nome);
-        dados.setDescricao(descricao);
-        dados.setPreco(preco);
-        dados.setQuantidade(quantidade);
-        dados.setCategoria(com.estoque.sistema.model.CategoriaProduto.valueOf(categoria.toUpperCase()));
-
-        try {
-            return ResponseEntity.ok(produtoService.atualizarProduto(id, dados, imagem));
-        } catch (RuntimeException ex) {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(produtoService.atualizarProduto(id, dto, imagem));
     }
 
-    @PatchMapping("/produtos/{id}/disponibilidade")
-    public ResponseEntity<Produto> alterarDisponibilidade(
-            @PathVariable @org.springframework.lang.NonNull Long id,
+    @Operation(summary = "Alterar disponibilidade")
+    @PatchMapping("/{id}/disponibilidade")
+    public ResponseEntity<ProdutoResponseDTO> alterarDisponibilidade(
+            @PathVariable @NonNull Long id,
             @RequestBody Map<String, Boolean> body
     ) {
         boolean disponivel = Boolean.TRUE.equals(body.getOrDefault("disponivel", false));
         return ResponseEntity.ok(produtoService.alterarDisponibilidade(id, disponivel));
     }
 
-    @DeleteMapping("/produtos/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable @org.springframework.lang.NonNull Long id) {
-        try {
-            produtoService.deletarProduto(id);
-            return ResponseEntity.noContent().build();
-        } catch (Exception ex) {
-            return ResponseEntity.internalServerError().build();
-        }
+    @Operation(summary = "Remover produto")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable @NonNull Long id) {
+        produtoService.deletarProduto(id);
+        return ResponseEntity.noContent().build();
     }
 }
