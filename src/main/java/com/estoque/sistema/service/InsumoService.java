@@ -1,12 +1,23 @@
 package com.estoque.sistema.service;
 
+import com.estoque.sistema.dto.InsumoRequestDTO;
+import com.estoque.sistema.dto.InsumoResponseDTO;
+import com.estoque.sistema.exception.ResourceNotFoundException;
 import com.estoque.sistema.model.Insumo;
 import com.estoque.sistema.repository.InsumoRepository;
+import io.github.resilience4j.retry.annotation.Retry;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class InsumoService {
@@ -17,43 +28,78 @@ public class InsumoService {
         this.insumoRepository = insumoRepository;
     }
 
-    public Insumo criar(@org.springframework.lang.NonNull Insumo insumo) {
-        return insumoRepository.save(insumo);
+    @Transactional
+    @CacheEvict(value = "insumos-criticos", allEntries = true)
+    public InsumoResponseDTO criar(@NonNull InsumoRequestDTO dto) {
+        Insumo insumo = mapToEntity(dto);
+        Insumo salvo = java.util.Objects.requireNonNull(insumoRepository.save(insumo));
+        return mapToResponseDTO(salvo);
     }
 
-    public List<Insumo> listarTodos() {
-        return insumoRepository.findAll();
+    public Page<InsumoResponseDTO> listarTodos(@NonNull Pageable pageable) {
+        return insumoRepository.findAll(pageable).map(this::mapToResponseDTO);
     }
 
-    public Optional<Insumo> buscarPorId(@org.springframework.lang.NonNull Long id) {
-        return insumoRepository.findById(id);
+    public Optional<InsumoResponseDTO> buscarPorId(@NonNull Long id) {
+        return insumoRepository.findById(id).map(this::mapToResponseDTO);
     }
 
-    public Insumo atualizar(@org.springframework.lang.NonNull Long id, @org.springframework.lang.NonNull Insumo dados) {
+    @Cacheable(value = "insumos-criticos")
+    public List<InsumoResponseDTO> listarCriticos() {
+        return insumoRepository.findAllCriticos().stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    @CacheEvict(value = "insumos-criticos", allEntries = true)
+    public InsumoResponseDTO atualizar(@NonNull Long id, @NonNull InsumoRequestDTO dto) {
         return insumoRepository.findById(id).map(insumo -> {
-            insumo.setNome(dados.getNome());
-            insumo.setUnidadeMedida(dados.getUnidadeMedida());
-            insumo.setCustoUnitario(dados.getCustoUnitario());
-            insumo.setQuantidadeMinima(dados.getQuantidadeMinima());
-            return insumoRepository.save(insumo);
-        }).orElseThrow(() -> new RuntimeException("Insumo não localizado."));
+            insumo.setNome(dto.getNome());
+            insumo.setQuantidade(dto.getQuantidade());
+            insumo.setUnidadeMedida(dto.getUnidadeMedida());
+            insumo.setCustoUnitario(dto.getCustoUnitario());
+            insumo.setQuantidadeMinima(dto.getQuantidadeMinima());
+            return mapToResponseDTO(insumoRepository.save(insumo));
+        }).orElseThrow(() -> new ResourceNotFoundException("Insumo não localizado."));
     }
 
-    public Insumo adicionarLote(@org.springframework.lang.NonNull Long id, @org.springframework.lang.NonNull BigDecimal quantidadeAdicionada) {
+    @Transactional
+    @CacheEvict(value = "insumos-criticos", allEntries = true)
+    @Retry(name = "default")
+    public InsumoResponseDTO adicionarLote(@NonNull Long id, @NonNull BigDecimal quantidadeAdicionada) {
         return insumoRepository.findById(id).map(insumo -> {
             insumo.setQuantidade(insumo.getQuantidade().add(quantidadeAdicionada));
-            return insumoRepository.save(insumo);
-        }).orElseThrow(() -> new RuntimeException("Insumo não localizado."));
+            return mapToResponseDTO(insumoRepository.save(insumo));
+        }).orElseThrow(() -> new ResourceNotFoundException("Insumo não localizado."));
     }
 
-    public List<Insumo> listarCriticos() {
-        return insumoRepository.findAll().stream()
-                .filter(i -> i.getQuantidadeMinima() != null
-                        && i.getQuantidade().compareTo(i.getQuantidadeMinima()) <= 0)
-                .toList();
-    }
+    @Transactional
+    @CacheEvict(value = "insumos-criticos", allEntries = true)
+    public void deletar(@NonNull Long id) {
 
-    public void deletar(@org.springframework.lang.NonNull Long id) {
         insumoRepository.deleteById(id);
+    }
+
+    private Insumo mapToEntity(InsumoRequestDTO dto) {
+        Insumo insumo = new Insumo();
+        insumo.setNome(dto.getNome());
+        insumo.setQuantidade(dto.getQuantidade());
+        insumo.setUnidadeMedida(dto.getUnidadeMedida());
+        insumo.setCustoUnitario(dto.getCustoUnitario());
+        insumo.setQuantidadeMinima(dto.getQuantidadeMinima());
+        return insumo;
+    }
+
+    private InsumoResponseDTO mapToResponseDTO(Insumo insumo) {
+        InsumoResponseDTO dto = new InsumoResponseDTO();
+        dto.setId(insumo.getId());
+        dto.setNome(insumo.getNome());
+        dto.setQuantidade(insumo.getQuantidade());
+        dto.setUnidadeMedida(insumo.getUnidadeMedida());
+        dto.setCustoUnitario(insumo.getCustoUnitario());
+        dto.setQuantidadeMinima(insumo.getQuantidadeMinima());
+        dto.setCritico(insumo.getQuantidade().compareTo(insumo.getQuantidadeMinima()) <= 0);
+        return dto;
     }
 }
