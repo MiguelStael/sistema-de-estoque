@@ -12,6 +12,6 @@ public class RelatorioFaturamentoDTO {
     private BigDecimal faturamentoTotal;
     private Map<String, BigDecimal> faturamentoPorTipo; // Presencial vs Delivery
     private Map<String, BigDecimal> faturamentoPorForma; // Pix, Cartão, etc
-    private List<PedidoResponseDTO> pedidosAuditados; // Lista para conferência
+    private org.springframework.data.domain.Page<PedidoResponseDTO> pedidosAuditados; // Lista paginada para conferência
     private List<Map<String, Object>> itensMaisVendidos;
 }

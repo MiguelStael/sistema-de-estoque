@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -12,6 +15,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "pedidos")
+@SQLDelete(sql = "UPDATE pedidos SET ativo = false WHERE id = ? AND version = ?")
+@SQLRestriction("ativo = true")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,6 +25,12 @@ public class Pedido {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    private Long version;
+
+    @Column(nullable = false)
+    private Boolean ativo = true;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime dataCriacao;

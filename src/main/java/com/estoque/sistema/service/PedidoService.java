@@ -166,30 +166,27 @@ public class PedidoService {
         LocalDateTime inicio = LocalDateTime.of(ano, mes, 1, 0, 0);
         LocalDateTime fim = inicio.plusMonths(1).minusNanos(1);
 
-        List<Pedido> pedidosPeriodo = pedidoRepository.findByDataCriacaoBetween(inicio, fim, org.springframework.data.domain.Pageable.unpaged()).getContent();
+        List<com.estoque.sistema.dto.RelatorioAgregadoDTO> agregados = pedidoRepository.findFaturamentoAgregado(inicio, fim);
         
-        BigDecimal faturamentoTotal = pedidosPeriodo.stream()
-                .filter(p -> p.getStatus() == StatusPedido.ENTREGUE && p.getPago())
-                .map(Pedido::getTotal)
+        BigDecimal faturamentoTotal = agregados.stream()
+                .map(com.estoque.sistema.dto.RelatorioAgregadoDTO::valor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        Map<String, BigDecimal> faturamentoPorTipo = pedidosPeriodo.stream()
-                .filter(p -> p.getStatus() == StatusPedido.ENTREGUE && p.getPago())
+        Map<String, BigDecimal> faturamentoPorTipo = agregados.stream()
                 .collect(Collectors.groupingBy(
-                        p -> p.getTipoPedido().name(),
-                        Collectors.mapping(Pedido::getTotal, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
+                        a -> a.tipoPedido().name(),
+                        Collectors.mapping(com.estoque.sistema.dto.RelatorioAgregadoDTO::valor, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
                 ));
 
-        Map<String, BigDecimal> faturamentoPorForma = pedidosPeriodo.stream()
-                .filter(p -> p.getStatus() == StatusPedido.ENTREGUE && p.getPago() && p.getFormaPagamento() != null)
+        Map<String, BigDecimal> faturamentoPorForma = agregados.stream()
+                .filter(a -> a.formaPagamento() != null)
                 .collect(Collectors.groupingBy(
-                        p -> p.getFormaPagamento().name(),
-                        Collectors.mapping(Pedido::getTotal, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
+                        a -> a.formaPagamento().name(),
+                        Collectors.mapping(com.estoque.sistema.dto.RelatorioAgregadoDTO::valor, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
                 ));
 
-        List<PedidoResponseDTO> pedidosAuditados = pedidosPeriodo.stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        org.springframework.data.domain.Page<Pedido> pedidosAuditadosPage = pedidoRepository.findByDataCriacaoBetween(inicio, fim, org.springframework.data.domain.PageRequest.of(0, 50));
+        org.springframework.data.domain.Page<PedidoResponseDTO> pedidosAuditados = pedidosAuditadosPage.map(this::mapToResponse);
 
         List<Object[]> resultados = itemPedidoRepository.findProdutosMaisVendidos(inicio, fim);
         List<Map<String, Object>> itensRanking = resultados.stream().map(res -> {
@@ -220,6 +217,7 @@ public class PedidoService {
 
         // 2. Deduzir de cada insumo da Ficha Técnica
         if (produto.getItensFicha() != null && !produto.getItensFicha().isEmpty()) {
+            List<Insumo> insumosParaSalvar = new ArrayList<>();
             for (ItemFichaTecnica itemFicha : produto.getItensFicha()) {
                 Insumo insumo = itemFicha.getInsumo();
                 BigDecimal quantidadeNecessaria = itemFicha.getQuantidade().multiply(new BigDecimal(quantidadePedido));
@@ -230,12 +228,18 @@ public class PedidoService {
                 }
                 
                 insumo.setQuantidade(insumo.getQuantidade().subtract(quantidadeNecessaria));
-                insumoRepository.save(insumo);
+                insumosParaSalvar.add(insumo);
+            }
+            if (!insumosParaSalvar.isEmpty()) {
+                insumoRepository.saveAll(insumosParaSalvar);
             }
         }
     }
 
     private void estornarEstoque(Pedido pedido) {
+        List<Produto> produtosParaEstornar = new ArrayList<>();
+        List<Insumo> insumosParaEstornar = new ArrayList<>();
+
         pedido.getItens().forEach(item -> {
             Produto produto = item.getProduto();
             Integer qtdPedido = item.getQuantidade();
@@ -243,7 +247,7 @@ public class PedidoService {
             // Estorna quantidade do produto
             if (produto.getQuantidade() != null) {
                 produto.setQuantidade(produto.getQuantidade() + qtdPedido);
-                produtoRepository.save(produto);
+                produtosParaEstornar.add(produto);
             }
 
             // Estorna insumos da Ficha Técnica
@@ -252,10 +256,17 @@ public class PedidoService {
                     Insumo insumo = itemFicha.getInsumo();
                     BigDecimal quantidadeParaEstornar = itemFicha.getQuantidade().multiply(new BigDecimal(qtdPedido));
                     insumo.setQuantidade(insumo.getQuantidade().add(quantidadeParaEstornar));
-                    insumoRepository.save(insumo);
+                    insumosParaEstornar.add(insumo);
                 }
             }
         });
+
+        if (!produtosParaEstornar.isEmpty()) {
+            produtoRepository.saveAll(produtosParaEstornar);
+        }
+        if (!insumosParaEstornar.isEmpty()) {
+            insumoRepository.saveAll(insumosParaEstornar);
+        }
     }
 
     private void registrarHistorico(Pedido pedido, String descricao) {
