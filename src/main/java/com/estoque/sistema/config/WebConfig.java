@@ -16,6 +16,9 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Value("${app.upload.dir}")
     private String uploadDir;
+    
+    @Value("${app.cors.allowed-origin-patterns:http://localhost:[*]}")
+    private String[] allowedOriginPatterns;
 
     @Override
     public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
@@ -29,8 +32,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(@NonNull CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("*")
+                .allowedOriginPatterns(allowedOriginPatterns)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
-                .allowedHeaders("*");
+                .allowedHeaders("*")
+                .allowCredentials(true);
     }
 }
