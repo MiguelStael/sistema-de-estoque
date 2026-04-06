@@ -1,0 +1,639 @@
+{
+	"info": {
+		"_postman_id": "7d9a1b2c-3e4f-5g6h-7i8j-9k0l1m2n3o4p",
+		"name": "Sistema de Estoque",
+		"description": "Coleção completa para testes do Sistema de Estoque (Restaurante/Inventário). Inclui autenticação, gestão de produtos, categorias, mesas, ingredientes e pedidos.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Cadastrar Usuário",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Usuário Teste\",\n    \"email\": \"teste@exemplo.com\",\n    \"senha\": \"senha123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/cadastro",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"cadastro"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"teste@exemplo.com\",\n    \"senha\": \"senha123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Categorias",
+			"item": [
+				{
+					"name": "Listar Categorias",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/categorias",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"categorias"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Categoria",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Bebidas\",\n    \"descricao\": \"Refrigerantes, sucos e águas\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/categorias",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"categorias"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Categoria",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Bebidas Alcoólicas\",\n    \"descricao\": \"Cervejas e vinhos\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/categorias/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"categorias",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remover Categoria",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/categorias/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"categorias",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Mesas",
+			"item": [
+				{
+					"name": "Listar Mesas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mesas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"mesas"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Mesa",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"numero\": 1,\n    \"capacidade\": 4,\n    \"status\": \"LIVRE\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mesas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"mesas"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Produtos",
+			"item": [
+				{
+					"name": "Cardápio Público",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/estoque/produtos/cardapio",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"estoque",
+								"produtos",
+								"cardapio"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Produtos Admin",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/estoque/produtos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"estoque",
+								"produtos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Produto",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "produto",
+									"value": "{\n    \"nome\": \"Hambúrguer Gourmet\",\n    \"descricao\": \"200g de carne, queijo cheddar, alface e tomate\",\n    \"preco\": 35.50,\n    \"quantidade\": 10,\n    \"categoriaId\": 1\n}",
+									"type": "text"
+								},
+								{
+									"key": "imagem",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estoque/produtos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"estoque",
+								"produtos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Alterar Disponibilidade",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"disponivel\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estoque/produtos/1/disponibilidade",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"estoque",
+								"produtos",
+								"1",
+								"disponibilidade"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Ingredientes",
+			"item": [
+				{
+					"name": "Listar Ingredientes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/estoque/ingredientes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"estoque",
+								"ingredientes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Ingrediente",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Carne Bovina\",\n    \"quantidade\": 10.5,\n    \"unidadeMedida\": \"KG\",\n    \"custoUnitario\": 45.00,\n    \"quantidadeMinima\": 2.0\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estoque/ingredientes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"estoque",
+								"ingredientes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Entrada de Lote",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"quantidade\": 5.0\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estoque/ingredientes/1/entrada",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"estoque",
+								"ingredientes",
+								"1",
+								"entrada"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Pedidos",
+			"item": [
+				{
+					"name": "Criar Pedido",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"mesaId\": 1,\n    \"identificacao\": \"Miguel\",\n    \"tipoPedido\": \"MESA\",\n    \"itens\": [\n        {\n            \"produtoId\": 1,\n            \"quantidade\": 2\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pedidos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pedidos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fila de Pedidos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pedidos/fila",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"fila"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Status",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pedidos/1/status?status=EM_PREPARO",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"1",
+								"status"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "EM_PREPARO"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Pagar Pedido",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pedidos/1/pagar?forma=CARTAO_DEBITO",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"1",
+								"pagar"
+							],
+							"query": [
+								{
+									"key": "forma",
+									"value": "CARTAO_DEBITO"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Relatório Mensal",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pedidos/relatorios/mensal?mes=4&ano=2026",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"relatorios",
+								"mensal"
+							],
+							"query": [
+								{
+									"key": "mes",
+									"value": "4"
+								},
+								{
+									"key": "ano",
+									"value": "2026"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Turno",
+			"item": [
+				{
+					"name": "Abrir Turno",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/turno/abrir?responsavel=Miguel",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"turno",
+								"abrir"
+							],
+							"query": [
+								{
+									"key": "responsavel",
+									"value": "Miguel"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fechar Turno",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/turno/fechar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"turno",
+								"fechar"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Turno Atual",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/turno/atual",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"turno",
+								"atual"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
