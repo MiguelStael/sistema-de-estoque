@@ -8,6 +8,7 @@ import java.util.List;
 @Data
 public class PedidoRequestDTO {
     private String identificacao;
+    private Long mesaId;
     private String observacao;
     private TipoPedido tipoPedido;
     private FormaPagamento formaPagamento;

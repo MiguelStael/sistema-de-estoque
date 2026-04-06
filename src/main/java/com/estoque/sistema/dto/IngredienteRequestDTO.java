@@ -9,9 +9,9 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class InsumoRequestDTO {
+public class IngredienteRequestDTO {
 
-    @NotBlank(message = "O nome do insumo é obrigatório")
+    @NotBlank(message = "O nome é obrigatório")
     private String nome;
 
     @NotNull(message = "A quantidade é obrigatória")

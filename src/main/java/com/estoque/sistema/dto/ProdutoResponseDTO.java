@@ -1,8 +1,6 @@
 package com.estoque.sistema.dto;
 
-import com.estoque.sistema.model.CategoriaProduto;
 import lombok.Data;
-
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -15,6 +13,6 @@ public class ProdutoResponseDTO {
     private Integer quantidade;
     private String urlImagem;
     private Boolean disponivel;
-    private CategoriaProduto categoria;
-    private List<ItemFichaTecnicaResponseDTO> itensFicha;
+    private CategoriaResponseDTO categoria;
+    private List<ComposicaoResponseDTO> itensComposicao;
 }

@@ -4,15 +4,17 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.envers.Audited;
 
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "item_ficha_tecnica")
+@Table(name = "composicoes")
+@Audited
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemFichaTecnica {
+public class Composicao {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,8 +25,8 @@ public class ItemFichaTecnica {
     private Produto produto;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "insumo_id", nullable = false)
-    private Insumo insumo;
+    @JoinColumn(name = "ingrediente_id", nullable = false)
+    private Ingrediente ingrediente;
 
     @Column(nullable = false, precision = 10, scale = 3)
     private BigDecimal quantidade;

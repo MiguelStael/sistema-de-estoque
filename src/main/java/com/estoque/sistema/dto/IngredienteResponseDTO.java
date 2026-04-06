@@ -6,7 +6,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class InsumoResponseDTO {
+public class IngredienteResponseDTO {
     private Long id;
     private String nome;
     private BigDecimal quantidade;

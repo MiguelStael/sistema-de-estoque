@@ -1,17 +1,18 @@
 package com.estoque.sistema.service;
 
-import com.estoque.sistema.dto.ItemFichaTecnicaRequestDTO;
-import com.estoque.sistema.dto.ItemFichaTecnicaResponseDTO;
+import com.estoque.sistema.dto.CategoriaResponseDTO;
+import com.estoque.sistema.dto.ComposicaoRequestDTO;
+import com.estoque.sistema.dto.ComposicaoResponseDTO;
 import com.estoque.sistema.dto.ProdutoRequestDTO;
 import com.estoque.sistema.dto.ProdutoResponseDTO;
 import com.estoque.sistema.exception.ResourceNotFoundException;
-import com.estoque.sistema.model.Insumo;
-import com.estoque.sistema.model.ItemFichaTecnica;
+import com.estoque.sistema.model.Categoria;
+import com.estoque.sistema.model.Ingrediente;
+import com.estoque.sistema.model.Composicao;
 import com.estoque.sistema.model.Produto;
-import com.estoque.sistema.repository.InsumoRepository;
+import com.estoque.sistema.repository.CategoriaRepository;
+import com.estoque.sistema.repository.IngredienteRepository;
 import com.estoque.sistema.repository.ProdutoRepository;
-import io.github.resilience4j.retry.annotation.Retry;
-import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import jakarta.validation.Valid;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -32,32 +33,40 @@ import java.util.stream.Collectors;
 public class ProdutoService {
 
     private final ProdutoRepository produtoRepository;
-    private final InsumoRepository insumoRepository;
+    private final IngredienteRepository ingredienteRepository;
+    private final CategoriaRepository categoriaRepository;
     private final ImageStorageService imageStorageService;
 
     public ProdutoService(ProdutoRepository produtoRepository,
-            InsumoRepository insumoRepository,
+            IngredienteRepository ingredienteRepository,
+            CategoriaRepository categoriaRepository,
             ImageStorageService imageStorageService) {
         this.produtoRepository = produtoRepository;
-        this.insumoRepository = insumoRepository;
+        this.ingredienteRepository = ingredienteRepository;
+        this.categoriaRepository = categoriaRepository;
         this.imageStorageService = imageStorageService;
     }
 
     @Transactional
     @CacheEvict(value = "cardapio", allEntries = true)
-    @TimeLimiter(name = "default")
-    @Retry(name = "default")
     public ProdutoResponseDTO criarProduto(@NonNull @Valid ProdutoRequestDTO dto, MultipartFile imagem) {
+        Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
+            .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada ID: " + dto.getCategoriaId()));
+            
         Produto produto = mapToEntity(dto);
+        produto.setCategoria(categoria);
 
         if (imagem != null && !imagem.isEmpty()) {
             produto.setUrlImagem(buildImageUrl(imageStorageService.storeFile(imagem)));
         }
 
-        processarFichaTecnica(produto, dto.getItensFicha());
+        processarComposicao(produto, dto.getItensComposicao());
 
-        Produto salvo = java.util.Objects.requireNonNull(produtoRepository.save(produto));
-        return mapToResponseDTO(salvo);
+        Produto salvoTemp = produtoRepository.save(produto);
+        if (salvoTemp == null) {
+            throw new RuntimeException("Erro ao salvar produto.");
+        }
+        return mapToResponseDTO(salvoTemp);
     }
 
     public Page<ProdutoResponseDTO> listarTodos(@NonNull Pageable pageable) {
@@ -77,8 +86,6 @@ public class ProdutoService {
 
     @Transactional
     @CacheEvict(value = "cardapio", allEntries = true)
-    @TimeLimiter(name = "default")
-    @Retry(name = "default")
     public ProdutoResponseDTO atualizarProduto(@NonNull Long id, @NonNull @Valid ProdutoRequestDTO dto,
             MultipartFile novaImagem) {
         return produtoRepository.findById(id).map(produto -> {
@@ -86,16 +93,19 @@ public class ProdutoService {
             produto.setDescricao(dto.getDescricao());
             produto.setPreco(dto.getPreco());
             produto.setQuantidade(dto.getQuantidade());
-            produto.setCategoria(dto.getCategoria());
+            
+            Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada ID: " + dto.getCategoriaId()));
+            produto.setCategoria(categoria);
 
             if (novaImagem != null && !novaImagem.isEmpty()) {
                 produto.setUrlImagem(buildImageUrl(imageStorageService.storeFile(novaImagem)));
             }
 
-            processarFichaTecnica(produto, dto.getItensFicha());
+            processarComposicao(produto, dto.getItensComposicao());
 
             return mapToResponseDTO(produtoRepository.save(produto));
-        }).orElseThrow(() -> new ResourceNotFoundException("Produto não localizado."));
+        }).orElseThrow(() -> new ResourceNotFoundException("Produto nao localizado."));
     }
 
     @Transactional
@@ -104,28 +114,32 @@ public class ProdutoService {
         return produtoRepository.findById(id).map(produto -> {
             produto.setDisponivel(disponivel);
             return mapToResponseDTO(produtoRepository.save(produto));
-        }).orElseThrow(() -> new ResourceNotFoundException("Produto não localizado."));
+        }).orElseThrow(() -> new ResourceNotFoundException("Produto nao localizado."));
     }
 
     @Transactional
     @CacheEvict(value = "cardapio", allEntries = true)
     public void deletarProduto(@NonNull Long id) {
-
         produtoRepository.deleteById(id);
     }
 
-    private void processarFichaTecnica(Produto produto, List<ItemFichaTecnicaRequestDTO> itensDto) {
-        produto.getItensFicha().clear();
+    private void processarComposicao(Produto produto, List<ComposicaoRequestDTO> itensDto) {
+        produto.getItensComposicao().clear();
         if (itensDto != null) {
-            for (ItemFichaTecnicaRequestDTO itemDto : itensDto) {
-                Insumo insumo = insumoRepository.findById(itemDto.getInsumoId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Insumo não encontrado: " + itemDto.getInsumoId()));
+            for (ComposicaoRequestDTO itemDto : itensDto) {
+                Long ingredienteId = itemDto.getIngredienteId();
+                if (ingredienteId == null) {
+                    throw new IllegalArgumentException("ID do ingrediente não pode ser nulo na composição.");
+                }
 
-                ItemFichaTecnica item = new ItemFichaTecnica();
+                Ingrediente ingrediente = ingredienteRepository.findById(ingredienteId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Ingrediente nao encontrado: " + ingredienteId));
+
+                Composicao item = new Composicao();
                 item.setProduto(produto);
-                item.setInsumo(insumo);
+                item.setIngrediente(ingrediente);
                 item.setQuantidade(itemDto.getQuantidade());
-                produto.getItensFicha().add(item);
+                produto.getItensComposicao().add(item);
             }
         }
     }
@@ -145,7 +159,6 @@ public class ProdutoService {
         produto.setDescricao(dto.getDescricao());
         produto.setPreco(dto.getPreco());
         produto.setQuantidade(dto.getQuantidade());
-        produto.setCategoria(dto.getCategoria());
         produto.setDisponivel(true);
         return produto;
     }
@@ -159,14 +172,22 @@ public class ProdutoService {
         dto.setQuantidade(produto.getQuantidade());
         dto.setUrlImagem(produto.getUrlImagem());
         dto.setDisponivel(produto.getDisponivel());
-        dto.setCategoria(produto.getCategoria());
+        
+        if (produto.getCategoria() != null) {
+            CategoriaResponseDTO catDto = new CategoriaResponseDTO();
+            catDto.setId(produto.getCategoria().getId());
+            catDto.setNome(produto.getCategoria().getNome());
+            catDto.setDescricao(produto.getCategoria().getDescricao());
+            catDto.setAtiva(produto.getCategoria().getAtiva());
+            dto.setCategoria(catDto);
+        }
 
-        if (produto.getItensFicha() != null) {
-            dto.setItensFicha(produto.getItensFicha().stream().map(item -> {
-                ItemFichaTecnicaResponseDTO itemDto = new ItemFichaTecnicaResponseDTO();
+        if (produto.getItensComposicao() != null) {
+            dto.setItensComposicao(produto.getItensComposicao().stream().map(item -> {
+                ComposicaoResponseDTO itemDto = new ComposicaoResponseDTO();
                 itemDto.setId(item.getId());
-                itemDto.setInsumoId(item.getInsumo().getId());
-                itemDto.setInsumoNome(item.getInsumo().getNome());
+                itemDto.setIngredienteId(item.getIngrediente().getId());
+                itemDto.setIngredienteNome(item.getIngrediente().getNome());
                 itemDto.setQuantidade(item.getQuantidade());
                 return itemDto;
             }).collect(Collectors.toList()));

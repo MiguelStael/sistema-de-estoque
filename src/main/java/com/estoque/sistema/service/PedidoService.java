@@ -5,6 +5,7 @@ import com.estoque.sistema.exception.ResourceNotFoundException;
 import com.estoque.sistema.model.*;
 import com.estoque.sistema.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,11 +20,14 @@ public class PedidoService {
 
     private final PedidoRepository pedidoRepository;
     private final ProdutoRepository produtoRepository;
-    private final InsumoRepository insumoRepository;
-    private final HistoricoPedidoRepository historicoRepository;
+    private final IngredienteRepository ingredienteRepository;
+    private final PedidoLogRepository pedidoLogRepository;
     private final ItemPedidoRepository itemPedidoRepository;
+    private final MesaRepository mesaRepository;
+    private final MovimentacaoService movimentacaoService;
 
     @Transactional
+    @org.springframework.retry.annotation.Retryable(retryFor = org.springframework.orm.ObjectOptimisticLockingFailureException.class, maxAttempts = 3, backoff = @org.springframework.retry.annotation.Backoff(delay = 500))
     public PedidoResponseDTO criarPedido(PedidoRequestDTO request) {
         Pedido pedido = new Pedido();
         pedido.setIdentificacao(request.getIdentificacao());
@@ -31,7 +35,20 @@ public class PedidoService {
         pedido.setStatus(StatusPedido.PENDENTE);
         pedido.setTipoPedido(request.getTipoPedido());
 
-        // Delivery pode ser pago no ato da criação
+        if (request.getTipoPedido() == TipoPedido.PRESENCIAL && request.getMesaId() != null) {
+            Long mesaId = java.util.Objects.requireNonNull(request.getMesaId(), "ID da mesa não pode ser nulo para pedido presencial.");
+            Mesa mesa = mesaRepository.findById(mesaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Mesa não encontrada ID: " + mesaId));
+            
+            if (mesa.getStatus() == StatusMesa.OCUPADA) {
+                throw new RuntimeException("Mesa " + mesa.getNumero() + " já está ocupada.");
+            }
+            
+            mesa.setStatus(StatusMesa.OCUPADA);
+            mesaRepository.save(mesa);
+            pedido.setMesa(mesa);
+        }
+
         if (request.getTipoPedido() == TipoPedido.DELIVERY && Boolean.TRUE.equals(request.getPago())) {
             pedido.setPago(true);
             pedido.setFormaPagamento(request.getFormaPagamento());
@@ -40,10 +57,10 @@ public class PedidoService {
 
         List<ItemPedido> itens = request.getItens().stream().map(itemDto -> {
             Long produtoId = itemDto.getProdutoId();
-            if (produtoId == null) throw new RuntimeException("ID do produto não informado.");
+            if (produtoId == null) throw new RuntimeException("ID do produto nao informado.");
             
             Produto produto = produtoRepository.findById(produtoId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado ID: " + produtoId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Produto nao encontrado ID: " + produtoId));
 
             validarEDeduzirEstoque(produto, itemDto.getQuantidade());
 
@@ -59,15 +76,15 @@ public class PedidoService {
         pedido.calcularTotal();
 
         Pedido salvo = pedidoRepository.save(pedido);
-        registrarHistorico(salvo, "Pedido criado e estoque de insumos reservado.");
+        registrarLog(salvo, "Pedido criado e estoque de ingredientes reservado.");
 
         return mapToResponse(salvo);
     }
 
     @Transactional
-    public PedidoResponseDTO atualizarStatus(Long id, StatusPedido novoStatus, String motivo) {
+    public PedidoResponseDTO atualizarStatus(@NonNull Long id, StatusPedido novoStatus, String motivo) {
         Pedido pedido = pedidoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido nao encontrado."));
 
         String logDetalhe = "Status alterado para: " + novoStatus;
         if (motivo != null && !motivo.isBlank()) {
@@ -76,23 +93,29 @@ public class PedidoService {
 
         if (novoStatus == StatusPedido.CANCELADO && pedido.getStatus() != StatusPedido.CANCELADO) {
             estornarEstoque(pedido);
-            logDetalhe += " (Estoque de insumos estornado)";
+            liberarMesa(pedido);
+            logDetalhe += " (Estoque de ingredientes estornado e mesa liberada)";
+        } else if (novoStatus == StatusPedido.ENTREGUE && pedido.getMesa() != null) {
+            liberarMesa(pedido);
+            logDetalhe += " (Mesa liberada)";
         }
 
         pedido.setStatus(novoStatus);
         Pedido salvo = pedidoRepository.save(pedido);
-        registrarHistorico(salvo, logDetalhe);
+        registrarLog(salvo, logDetalhe);
 
         return mapToResponse(salvo);
     }
 
     @Transactional
-    public PedidoResponseDTO pagarPedido(Long id, FormaPagamento forma) {
+    public PedidoResponseDTO pagarPedido(@NonNull Long id, @NonNull FormaPagamento forma) {
+        java.util.Objects.requireNonNull(id, "ID não pode ser nulo.");
+        java.util.Objects.requireNonNull(forma, "Forma de pagamento não pode ser nula.");
         Pedido pedido = pedidoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido nao encontrado."));
 
         if (pedido.getPago()) {
-            throw new RuntimeException("Pedido já está pago.");
+            throw new RuntimeException("Pedido ja esta pago.");
         }
 
         pedido.setPago(true);
@@ -100,29 +123,32 @@ public class PedidoService {
         pedido.setDataPagamento(LocalDateTime.now());
         
         Pedido salvo = pedidoRepository.save(pedido);
-        registrarHistorico(salvo, "Pagamento efetuado via: " + forma);
+        registrarLog(salvo, "Pagamento efetuado via: " + forma);
         
         return mapToResponse(salvo);
     }
 
     @Transactional
-    public PedidoResponseDTO editarPedido(Long id, PedidoRequestDTO request, String motivo) {
+    public PedidoResponseDTO editarPedido(@NonNull Long id, PedidoRequestDTO request, String motivo) {
         Pedido pedido = pedidoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido nao encontrado."));
 
         if (pedido.getStatus() == StatusPedido.ENTREGUE || pedido.getStatus() == StatusPedido.CANCELADO) {
-            throw new RuntimeException("Não é possível editar um pedido encerrado ou cancelado.");
+            throw new RuntimeException("Não e possivel editar um pedido encerrado ou cancelado.");
         }
 
         BigDecimal totalAnterior = pedido.getTotal();
         
-        // Estorna o estoque atual para reprocessar
         estornarEstoque(pedido);
         pedido.getItens().clear();
 
         List<ItemPedido> novosItens = request.getItens().stream().map(itemDto -> {
-            Produto produto = produtoRepository.findById(itemDto.getProdutoId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado ID: " + itemDto.getProdutoId()));
+            Long produtoId = itemDto.getProdutoId();
+            if (produtoId == null) {
+                throw new IllegalArgumentException("ID do produto não pode ser nulo.");
+            }
+            Produto produto = produtoRepository.findById(produtoId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Produto nao encontrado ID: " + produtoId));
 
             validarEDeduzirEstoque(produto, itemDto.getQuantidade());
 
@@ -150,7 +176,7 @@ public class PedidoService {
         }
 
         Pedido salvo = pedidoRepository.save(pedido);
-        registrarHistorico(salvo, logDetalhe);
+        registrarLog(salvo, logDetalhe);
 
         return mapToResponse(salvo);
     }
@@ -196,67 +222,71 @@ public class PedidoService {
             return map;
         }).collect(Collectors.toList());
 
+        BigDecimal totalPerdas = movimentacaoService.calcularTotalPerdasNoPeriodo(inicio, fim);
+
         return RelatorioFaturamentoDTO.builder()
                 .faturamentoTotal(faturamentoTotal)
                 .faturamentoPorTipo(faturamentoPorTipo)
                 .faturamentoPorForma(faturamentoPorForma)
                 .pedidosAuditados(pedidosAuditados)
                 .itensMaisVendidos(itensRanking)
+                .valorTotalPerdas(totalPerdas)
+                .lucroEstimado(faturamentoTotal.subtract(totalPerdas))
                 .build();
     }
 
     private void validarEDeduzirEstoque(Produto produto, Integer quantidadePedido) {
-        // 1. Se o produto tiver quantidade direta (ex: bebida pronta), deduzir do produto
         if (produto.getQuantidade() != null && produto.getQuantidade() > 0) {
             if (produto.getQuantidade() < quantidadePedido) {
                 throw new RuntimeException("Estoque insuficiente para o produto: " + produto.getNome());
             }
             produto.setQuantidade(produto.getQuantidade() - quantidadePedido);
             produtoRepository.save(produto);
+            movimentacaoService.registrarVendaProduto(produto, quantidadePedido, "Venda direta de produto");
         }
 
-        // 2. Deduzir de cada insumo da Ficha Técnica
-        if (produto.getItensFicha() != null && !produto.getItensFicha().isEmpty()) {
-            List<Insumo> insumosParaSalvar = new ArrayList<>();
-            for (ItemFichaTecnica itemFicha : produto.getItensFicha()) {
-                Insumo insumo = itemFicha.getInsumo();
-                BigDecimal quantidadeNecessaria = itemFicha.getQuantidade().multiply(new BigDecimal(quantidadePedido));
+        if (produto.getItensComposicao() != null && !produto.getItensComposicao().isEmpty()) {
+            List<Ingrediente> ingredientesParaSalvar = new ArrayList<>();
+            for (Composicao composicao : produto.getItensComposicao()) {
+                Ingrediente ingrediente = composicao.getIngrediente();
+                BigDecimal quantidadeNecessaria = composicao.getQuantidade().multiply(new BigDecimal(quantidadePedido));
                 
-                if (insumo.getQuantidade().compareTo(quantidadeNecessaria) < 0) {
-                    throw new RuntimeException("Estoque insuficiente do insumo [" + insumo.getNome() + 
+                if (ingrediente.getQuantidade().compareTo(quantidadeNecessaria) < 0) {
+                    throw new RuntimeException("Estoque insuficiente do ingrediente [" + ingrediente.getNome() + 
                                                "] para produzir o prato [" + produto.getNome() + "].");
                 }
                 
-                insumo.setQuantidade(insumo.getQuantidade().subtract(quantidadeNecessaria));
-                insumosParaSalvar.add(insumo);
+                ingrediente.setQuantidade(ingrediente.getQuantidade().subtract(quantidadeNecessaria));
+                ingredientesParaSalvar.add(ingrediente);
+                movimentacaoService.registrarVenda(ingrediente, quantidadeNecessaria, "Venda via prato: " + produto.getNome());
             }
-            if (!insumosParaSalvar.isEmpty()) {
-                insumoRepository.saveAll(insumosParaSalvar);
+            if (!ingredientesParaSalvar.isEmpty()) {
+                ingredienteRepository.saveAll(ingredientesParaSalvar);
             }
         }
     }
 
     private void estornarEstoque(Pedido pedido) {
         List<Produto> produtosParaEstornar = new ArrayList<>();
-        List<Insumo> insumosParaEstornar = new ArrayList<>();
+        List<Ingrediente> ingredientesParaEstornar = new ArrayList<>();
 
         pedido.getItens().forEach(item -> {
             Produto produto = item.getProduto();
             Integer qtdPedido = item.getQuantidade();
 
-            // Estorna quantidade do produto
             if (produto.getQuantidade() != null) {
                 produto.setQuantidade(produto.getQuantidade() + qtdPedido);
                 produtosParaEstornar.add(produto);
+                movimentacaoService.registrarVendaProduto(produto, -qtdPedido, "Estorno de pedido ID: " + pedido.getId());
             }
 
-            // Estorna insumos da Ficha Técnica
-            if (produto.getItensFicha() != null) {
-                for (ItemFichaTecnica itemFicha : produto.getItensFicha()) {
-                    Insumo insumo = itemFicha.getInsumo();
-                    BigDecimal quantidadeParaEstornar = itemFicha.getQuantidade().multiply(new BigDecimal(qtdPedido));
-                    insumo.setQuantidade(insumo.getQuantidade().add(quantidadeParaEstornar));
-                    insumosParaEstornar.add(insumo);
+            if (produto.getItensComposicao() != null) {
+                for (Composicao composicao : produto.getItensComposicao()) {
+                    Ingrediente ingrediente = composicao.getIngrediente();
+                    BigDecimal quantidadeParaEstornar = composicao.getQuantidade().multiply(new BigDecimal(qtdPedido));
+                    ingrediente.setQuantidade(ingrediente.getQuantidade().add(quantidadeParaEstornar));
+                    ingredientesParaEstornar.add(ingrediente);
+                    movimentacaoService.registrarVenda(ingrediente, quantidadeParaEstornar.negate(), "Estorno de pedido ID: " + pedido.getId());
                 }
             }
         });
@@ -264,24 +294,44 @@ public class PedidoService {
         if (!produtosParaEstornar.isEmpty()) {
             produtoRepository.saveAll(produtosParaEstornar);
         }
-        if (!insumosParaEstornar.isEmpty()) {
-            insumoRepository.saveAll(insumosParaEstornar);
+        if (!ingredientesParaEstornar.isEmpty()) {
+            ingredienteRepository.saveAll(ingredientesParaEstornar);
         }
     }
 
-    private void registrarHistorico(Pedido pedido, String descricao) {
-        HistoricoPedido historico = new HistoricoPedido();
-        historico.setPedido(pedido);
-        historico.setStatus(pedido.getStatus());
-        historico.setDescricao(descricao);
-        historicoRepository.save(historico);
+    private void liberarMesa(Pedido pedido) {
+        if (pedido.getMesa() != null) {
+            Mesa mesa = pedido.getMesa();
+            mesa.setStatus(StatusMesa.LIVRE);
+            mesaRepository.save(mesa);
+        }
+    }
+
+    private void registrarLog(Pedido pedido, String descricao) {
+        PedidoLog log = new PedidoLog();
+        log.setPedido(pedido);
+        log.setStatus(pedido.getStatus());
+        log.setDescricao(descricao);
+        pedidoLogRepository.save(log);
     }
 
     private PedidoResponseDTO mapToResponse(Pedido p) {
-        return PedidoResponseDTO.builder()
+        PedidoResponseDTO.PedidoResponseDTOBuilder builder = PedidoResponseDTO.builder()
                 .id(p.getId())
                 .identificacao(p.getIdentificacao())
-                .dataCriacao(p.getDataCriacao())
+                .dataCriacao(p.getDataCriacao());
+
+        if (p.getMesa() != null) {
+            MesaResponseDTO mesaDto = new MesaResponseDTO();
+            mesaDto.setId(p.getMesa().getId());
+            mesaDto.setNumero(p.getMesa().getNumero());
+            mesaDto.setStatus(p.getMesa().getStatus());
+            mesaDto.setCapacidade(p.getMesa().getCapacidade());
+            mesaDto.setAtiva(p.getMesa().getAtiva());
+            builder.mesa(mesaDto);
+        }
+
+        return builder
                 .status(p.getStatus())
                 .tipoPedido(p.getTipoPedido())
                 .formaPagamento(p.getFormaPagamento())

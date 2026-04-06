@@ -7,12 +7,12 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class ItemFichaTecnicaRequestDTO {
+public class ComposicaoRequestDTO {
 
-    @NotNull(message = "O ID do insumo é obrigatório")
-    private Long insumoId;
+    @NotNull(message = "O ID do ingrediente é obrigatório")
+    private Long ingredienteId;
 
-    @NotNull(message = "A quantidade do insumo é obrigatória")
+    @NotNull(message = "A quantidade é obrigatória")
     @Positive(message = "A quantidade deve ser maior que zero")
     private BigDecimal quantidade;
 }

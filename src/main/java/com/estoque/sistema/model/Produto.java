@@ -18,6 +18,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@org.hibernate.envers.Audited
 public class Produto {
 
     @Id
@@ -31,7 +32,7 @@ public class Produto {
     private Boolean ativo = true;
 
     @OneToMany(mappedBy = "produto", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ItemFichaTecnica> itensFicha = new ArrayList<>();
+    private List<Composicao> itensComposicao = new ArrayList<>();
 
     @Column(nullable = false, length = 150)
     private String nome;
@@ -51,7 +52,7 @@ public class Produto {
     @Column(nullable = false)
     private Boolean disponivel = false;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private CategoriaProduto categoria;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "categoria_id")
+    private Categoria categoria;
 }
