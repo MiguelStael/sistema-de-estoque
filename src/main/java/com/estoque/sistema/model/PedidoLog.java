@@ -9,11 +9,11 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "historicos_pedido")
+@Table(name = "pedidos_logs")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class HistoricoPedido {
+public class PedidoLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

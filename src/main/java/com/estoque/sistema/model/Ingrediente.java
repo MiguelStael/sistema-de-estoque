@@ -10,13 +10,14 @@ import org.hibernate.annotations.SQLRestriction;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "insumos")
-@SQLDelete(sql = "UPDATE insumos SET ativo = false WHERE id = ? AND version = ?")
+@Table(name = "ingredientes")
+@SQLDelete(sql = "UPDATE ingredientes SET ativo = false WHERE id = ? AND version = ?")
 @SQLRestriction("ativo = true")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Insumo {
+@org.hibernate.envers.Audited
+public class Ingrediente {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

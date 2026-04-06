@@ -1,6 +1,5 @@
 package com.estoque.sistema.dto;
 
-import com.estoque.sistema.model.CategoriaProduto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -27,7 +26,7 @@ public class ProdutoRequestDTO {
     private Integer quantidade;
 
     @NotNull(message = "A categoria é obrigatória")
-    private CategoriaProduto categoria;
+    private Long categoriaId;
 
-    private List<ItemFichaTecnicaRequestDTO> itensFicha = new ArrayList<>();
+    private List<ComposicaoRequestDTO> itensComposicao = new ArrayList<>();
 }

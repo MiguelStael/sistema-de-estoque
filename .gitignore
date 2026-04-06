@@ -15,3 +15,4 @@ uploads/
 # Arquivos de log e SO
 *.log
 .DS_Store
+.env

@@ -34,6 +34,7 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/produtos/**").hasAnyRole("DONO", "FUNCIONARIO")
                         .requestMatchers("/estoque/**").hasAnyRole("DONO", "FUNCIONARIO")
+                        .requestMatchers("/turno/**").hasAnyRole("DONO", "FUNCIONARIO")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

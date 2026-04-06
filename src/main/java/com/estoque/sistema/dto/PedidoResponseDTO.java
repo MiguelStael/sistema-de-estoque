@@ -14,6 +14,7 @@ import java.util.List;
 public class PedidoResponseDTO {
     private Long id;
     private String identificacao;
+    private MesaResponseDTO mesa;
     private LocalDateTime dataCriacao;
     private StatusPedido status;
     private TipoPedido tipoPedido;

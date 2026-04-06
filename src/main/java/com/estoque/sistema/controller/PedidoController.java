@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/pedidos")
 @RequiredArgsConstructor
-@Tag(name = "Pedidos", description = "Gestão do ciclo de vida dos pedidos e stock de insumos")
+@Tag(name = "Pedidos", description = "Gestão do ciclo de vida dos pedidos e estoque de ingredientes")
 public class PedidoController {
 
     private final PedidoService pedidoService;
@@ -35,7 +36,7 @@ public class PedidoController {
     @Operation(summary = "Atualizar status do pedido")
     @PatchMapping("/{id}/status")
     public ResponseEntity<PedidoResponseDTO> atualizarStatus(
-            @PathVariable Long id, 
+            @PathVariable @NonNull Long id, 
             @RequestParam StatusPedido status,
             @RequestParam(required = false) String motivo) {
         return ResponseEntity.ok(pedidoService.atualizarStatus(id, status, motivo));
@@ -44,7 +45,7 @@ public class PedidoController {
     @Operation(summary = "Registrar pagamento")
     @PatchMapping("/{id}/pagar")
     public ResponseEntity<PedidoResponseDTO> pagarPedido(
-            @PathVariable Long id, 
+            @PathVariable @NonNull Long id, 
             @RequestParam FormaPagamento forma) {
         return ResponseEntity.ok(pedidoService.pagarPedido(id, forma));
     }
@@ -52,7 +53,7 @@ public class PedidoController {
     @Operation(summary = "Editar pedido existente")
     @PutMapping("/{id}")
     public ResponseEntity<PedidoResponseDTO> editarPedido(
-            @PathVariable Long id, 
+            @PathVariable @NonNull Long id, 
             @RequestBody PedidoRequestDTO request,
             @RequestParam(required = false) String motivo) {
         return ResponseEntity.ok(pedidoService.editarPedido(id, request, motivo));

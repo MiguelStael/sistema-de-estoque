@@ -51,6 +51,10 @@ public class Pedido {
     @Column(nullable = false, length = 100)
     private String identificacao;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mesa_id")
+    private Mesa mesa;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TipoPedido tipoPedido;
@@ -67,7 +71,7 @@ public class Pedido {
     private List<ItemPedido> itens = new ArrayList<>();
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<HistoricoPedido> historico = new ArrayList<>();
+    private List<PedidoLog> logs = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
