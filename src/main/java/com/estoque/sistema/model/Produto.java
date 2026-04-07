@@ -49,6 +49,9 @@ public class Produto {
     @Column(name = "url_imagem")
     private String urlImagem;
 
+    @Column(name = "quantidade_minima")
+    private Integer quantidadeMinima;
+
     @Column(nullable = false)
     private Boolean disponivel = false;
 

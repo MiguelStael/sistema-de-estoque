@@ -58,6 +58,8 @@ public class ProdutoService {
 
         if (imagem != null && !imagem.isEmpty()) {
             produto.setUrlImagem(buildImageUrl(imageStorageService.storeFile(imagem)));
+        } else {
+            produto.setUrlImagem(null);
         }
 
         processarComposicao(produto, dto.getItensComposicao());
@@ -93,12 +95,22 @@ public class ProdutoService {
             produto.setDescricao(dto.getDescricao());
             produto.setPreco(dto.getPreco());
             produto.setQuantidade(dto.getQuantidade());
+            produto.setQuantidadeMinima(dto.getQuantidadeMinima());
             
             Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada ID: " + dto.getCategoriaId()));
             produto.setCategoria(categoria);
 
-            if (novaImagem != null && !novaImagem.isEmpty()) {
+            if (dto.isRemoverImagem()) {
+                if (produto.getUrlImagem() != null) {
+                    imageStorageService.deleteFile(produto.getUrlImagem());
+                    produto.setUrlImagem(null);
+                }
+            } else if (novaImagem != null && !novaImagem.isEmpty()) {
+                // Deletar imagem antiga se existir
+                if (produto.getUrlImagem() != null) {
+                    imageStorageService.deleteFile(produto.getUrlImagem());
+                }
                 produto.setUrlImagem(buildImageUrl(imageStorageService.storeFile(novaImagem)));
             }
 
@@ -120,7 +132,12 @@ public class ProdutoService {
     @Transactional
     @CacheEvict(value = "cardapio", allEntries = true)
     public void deletarProduto(@NonNull Long id) {
-        produtoRepository.deleteById(id);
+        produtoRepository.findById(id).ifPresent(produto -> {
+            if (produto.getUrlImagem() != null) {
+                imageStorageService.deleteFile(produto.getUrlImagem());
+            }
+            produtoRepository.delete(produto);
+        });
     }
 
     private void processarComposicao(Produto produto, List<ComposicaoRequestDTO> itensDto) {
@@ -159,6 +176,7 @@ public class ProdutoService {
         produto.setDescricao(dto.getDescricao());
         produto.setPreco(dto.getPreco());
         produto.setQuantidade(dto.getQuantidade());
+        produto.setQuantidadeMinima(dto.getQuantidadeMinima());
         produto.setDisponivel(true);
         return produto;
     }
@@ -170,6 +188,7 @@ public class ProdutoService {
         dto.setDescricao(produto.getDescricao());
         dto.setPreco(produto.getPreco());
         dto.setQuantidade(produto.getQuantidade());
+        dto.setQuantidadeMinima(produto.getQuantidadeMinima());
         dto.setUrlImagem(produto.getUrlImagem());
         dto.setDisponivel(produto.getDisponivel());
         

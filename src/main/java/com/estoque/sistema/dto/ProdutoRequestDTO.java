@@ -28,5 +28,9 @@ public class ProdutoRequestDTO {
     @NotNull(message = "A categoria é obrigatória")
     private Long categoriaId;
 
+    private Integer quantidadeMinima;
+
+    private boolean removerImagem = false;
+
     private List<ComposicaoRequestDTO> itensComposicao = new ArrayList<>();
 }
