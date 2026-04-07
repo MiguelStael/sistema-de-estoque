@@ -14,4 +14,5 @@ public class IngredienteResponseDTO {
     private BigDecimal custoUnitario;
     private BigDecimal quantidadeMinima;
     private Boolean critico;
+    private java.time.LocalDate dataValidade;
 }

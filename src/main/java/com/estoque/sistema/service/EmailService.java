@@ -30,10 +30,11 @@ public class EmailService {
                 MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, 
                 StandardCharsets.UTF_8.name());
 
-            helper.setTo(emailDestino != null ? emailDestino : "");
-            helper.setSubject("ALERTA: Itens em Estoque Crítico - Sistema de Estoque");
+            String para = (emailDestino != null) ? emailDestino : "";
+            helper.setTo(para);
+            helper.setSubject("ALERTA: Itens em Estoque Crítico - CoreEstoque");
             helper.setText(htmlContent, true);
-            helper.setFrom("sistema@estoque.com");
+            helper.setFrom("sistema@coreestoque.com");
 
             mailSender.send(mimeMessage);
             log.info("E-mail de alerta enviado com sucesso para: {}", emailDestino);

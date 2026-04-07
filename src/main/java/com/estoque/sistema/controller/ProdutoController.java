@@ -3,6 +3,8 @@ package com.estoque.sistema.controller;
 import com.estoque.sistema.dto.ProdutoRequestDTO;
 import com.estoque.sistema.dto.ProdutoResponseDTO;
 import com.estoque.sistema.service.ProdutoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/estoque/produtos")
+@Tag(name = "Estoque: Produtos", description = "Gerenciamento do cardápio e produtos prontos para venda")
 public class ProdutoController {
 
     private final ProdutoService produtoService;
@@ -28,6 +31,7 @@ public class ProdutoController {
     }
 
     @GetMapping("/cardapio")
+    @Operation(summary = "Listar cardápio público", description = "Retorna todos os produtos marcados como disponíveis para venda.")
     public ResponseEntity<List<ProdutoResponseDTO>> cardapioPublico() {
         return ResponseEntity.ok(produtoService.listarCardapioPublico());
     }
@@ -47,6 +51,7 @@ public class ProdutoController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Criar novo produto", description = "Cadastra um produto com foto, preco e composição de ingredientes.")
     public ResponseEntity<ProdutoResponseDTO> criar(
             @RequestPart("produto") @Valid @NonNull ProdutoRequestDTO dto,
             @RequestPart(value = "imagem", required = false) MultipartFile imagem
@@ -65,6 +70,7 @@ public class ProdutoController {
     }
 
     @PatchMapping("/{id}/disponibilidade")
+    @Operation(summary = "Alterar disponibilidade", description = "Ativa ou desativa um produto do cardápio público temporariamente.")
     public ResponseEntity<ProdutoResponseDTO> alterarDisponibilidade(
             @PathVariable @NonNull Long id,
             @RequestBody Map<String, Boolean> body

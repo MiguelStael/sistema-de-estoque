@@ -3,6 +3,8 @@ package com.estoque.sistema.controller;
 import com.estoque.sistema.dto.IngredienteRequestDTO;
 import com.estoque.sistema.dto.IngredienteResponseDTO;
 import com.estoque.sistema.service.IngredienteService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +20,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/estoque/ingredientes")
+@Tag(name = "Estoque: Ingredientes", description = "Gerenciamento de insumos e matérias-primas")
 public class IngredienteController {
 
     private final IngredienteService ingredienteService;
@@ -27,17 +30,20 @@ public class IngredienteController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar todos os ingredientes", description = "Retorna uma lista paginada de todos os insumos ativos no sistema.")
     public ResponseEntity<Page<IngredienteResponseDTO>> listar(
             @PageableDefault(size = 10, sort = "nome") @NonNull Pageable pageable) {
         return ResponseEntity.ok(ingredienteService.listarTodos(pageable));
     }
 
     @GetMapping("/criticos")
+    @Operation(summary = "Listar ingredientes críticos", description = "Retorna apenas os itens que estão abaixo da quantidade mínima permitida.")
     public ResponseEntity<List<IngredienteResponseDTO>> listarCriticos() {
         return ResponseEntity.ok(ingredienteService.listarCriticos());
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Buscar ingrediente por ID")
     public ResponseEntity<IngredienteResponseDTO> buscarPorId(@PathVariable @NonNull Long id) {
         return ingredienteService.buscarPorId(id)
                 .map(ResponseEntity::ok)
@@ -45,6 +51,7 @@ public class IngredienteController {
     }
 
     @PostMapping
+    @Operation(summary = "Criar novo ingrediente", description = "Cadastra um insumo com nome, unidade de medida, custo e data de validade.")
     public ResponseEntity<IngredienteResponseDTO> criar(@RequestBody @Valid @NonNull IngredienteRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ingredienteService.criar(dto));
@@ -58,6 +65,7 @@ public class IngredienteController {
     }
 
     @PatchMapping("/{id}/entrada")
+    @Operation(summary = "Registrar entrada de estoque", description = "Aumenta a quantidade de um ingrediente (ex: após uma compra).")
     public ResponseEntity<IngredienteResponseDTO> adicionarLote(
             @PathVariable @NonNull Long id,
             @RequestBody Map<String, BigDecimal> body) {
@@ -68,6 +76,7 @@ public class IngredienteController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Excluír ingrediente (Soft Delete)", description = "Marca o ingrediente como inativo, mantendo-o no banco para integridade histórica.")
     public ResponseEntity<Void> deletar(@PathVariable @NonNull Long id) {
         ingredienteService.deletar(id);
         return ResponseEntity.noContent().build();

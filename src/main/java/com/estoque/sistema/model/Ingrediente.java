@@ -43,4 +43,7 @@ public class Ingrediente {
 
     @Column(name = "quantidade_minima", precision = 10, scale = 3)
     private BigDecimal quantidadeMinima;
+
+    @Column(name = "data_validade")
+    private java.time.LocalDate dataValidade;
 }

@@ -40,6 +40,14 @@ public class MonitoramentoEstoqueService {
                 .collect(Collectors.toList());
     }
 
+    public List<AlertaEstoqueDTO> listarAlertasVencimento() {
+        java.time.LocalDate limite = java.time.LocalDate.now().plusDays(7);
+        return ingredienteRepository.findAll().stream()
+                .filter(i -> i.getDataValidade() != null && i.getDataValidade().isBefore(limite))
+                .map(this::mapIngredienteToAlerta)
+                .collect(Collectors.toList());
+    }
+
     private AlertaEstoqueDTO mapIngredienteToAlerta(Ingrediente i) {
         BigDecimal qtdAtual = i.getQuantidade() != null ? i.getQuantidade() : BigDecimal.ZERO;
         BigDecimal qtdMinima = i.getQuantidadeMinima() != null ? i.getQuantidadeMinima() : BigDecimal.ONE;
@@ -53,8 +61,16 @@ public class MonitoramentoEstoqueService {
                 .quantidadeMinima(qtdMinima)
                 .unidadeMedida(i.getUnidadeMedida().name())
                 .percentualRestante(percentual)
-                .status(definirStatus(percentual))
+                .dataValidade(i.getDataValidade())
+                .status(definirStatusComVencimento(percentual, i.getDataValidade()))
                 .build();
+    }
+
+    private String definirStatusComVencimento(double percentual, java.time.LocalDate validade) {
+        if (validade != null && validade.isBefore(java.time.LocalDate.now().plusDays(7))) {
+            return "VENCENDO";
+        }
+        return definirStatus(percentual);
     }
 
     private AlertaEstoqueDTO mapProdutoToAlerta(Produto p) {
