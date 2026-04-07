@@ -64,7 +64,7 @@ public class IngredienteController {
         BigDecimal quantidadeReq = body.getOrDefault("quantidade", BigDecimal.ZERO);
         BigDecimal quantidade = quantidadeReq != null ? quantidadeReq : BigDecimal.ZERO;
 
-        return ResponseEntity.ok(ingredienteService.adicionarLote(id, quantidade));
+        return ResponseEntity.ok(ingredienteService.adicionarLote(id, java.util.Objects.requireNonNull(quantidade)));
     }
 
     @DeleteMapping("/{id}")

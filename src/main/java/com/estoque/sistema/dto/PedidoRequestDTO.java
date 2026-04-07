@@ -13,5 +13,10 @@ public class PedidoRequestDTO {
     private TipoPedido tipoPedido;
     private FormaPagamento formaPagamento;
     private Boolean pago;
+    private String clienteNome;
+    private String clienteTelefone;
+    private String enderecoEntrega;
+    private java.math.BigDecimal taxaEntrega;
+    private java.math.BigDecimal taxaServico;
     private List<ItemPedidoRequestDTO> itens;
 }

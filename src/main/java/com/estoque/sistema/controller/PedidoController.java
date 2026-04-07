@@ -43,8 +43,8 @@ public class PedidoController {
     @PatchMapping("/{id}/pagar")
     public ResponseEntity<PedidoResponseDTO> pagarPedido(
             @PathVariable @NonNull Long id, 
-            @RequestParam FormaPagamento forma) {
-        return ResponseEntity.ok(pedidoService.pagarPedido(id, forma));
+            @RequestParam @NonNull FormaPagamento forma) {
+        return ResponseEntity.ok(pedidoService.pagarPedido(id, java.util.Objects.requireNonNull(forma)));
     }
 
     @PutMapping("/{id}")

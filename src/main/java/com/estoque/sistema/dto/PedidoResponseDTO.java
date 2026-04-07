@@ -23,5 +23,10 @@ public class PedidoResponseDTO {
     private LocalDateTime dataPagamento;
     private BigDecimal total;
     private String observacao;
+    private String clienteNome;
+    private String clienteTelefone;
+    private String enderecoEntrega;
+    private java.math.BigDecimal taxaEntrega;
+    private java.math.BigDecimal taxaServico;
     private List<ItemPedidoResponseDTO> itens;
 }
