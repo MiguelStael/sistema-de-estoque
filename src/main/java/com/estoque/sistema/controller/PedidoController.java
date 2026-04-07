@@ -4,9 +4,12 @@ import com.estoque.sistema.dto.*;
 import com.estoque.sistema.model.FormaPagamento;
 import com.estoque.sistema.model.StatusPedido;
 import com.estoque.sistema.service.PedidoService;
+import com.estoque.sistema.service.RelatorioExcelService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +23,7 @@ import java.util.List;
 public class PedidoController {
 
     private final PedidoService pedidoService;
+    private final RelatorioExcelService relatorioExcelService;
 
     @Operation(summary = "Criar novo pedido")
     @PostMapping
@@ -63,5 +67,19 @@ public class PedidoController {
     @GetMapping("/relatorios/mensal")
     public ResponseEntity<RelatorioFaturamentoDTO> relatorioMensal(@RequestParam int mes, @RequestParam int ano) {
         return ResponseEntity.ok(pedidoService.gerarFechamentoMensal(mes, ano));
+    }
+
+    @Operation(summary = "Exportar relatório mensal para Excel")
+    @GetMapping("/relatorios/mensal/exportar")
+    public ResponseEntity<byte[]> exportarRelatorioMensal(@RequestParam int mes, @RequestParam int ano) throws java.io.IOException {
+        RelatorioFaturamentoDTO relatorio = pedidoService.gerarFechamentoMensal(mes, ano);
+        byte[] excelContent = relatorioExcelService.gerarExcelFaturamento(relatorio, mes, ano);
+
+        String fileName = String.format("faturamento-%02d-%d.xlsx", mes, ano);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excelContent);
     }
 }
