@@ -67,6 +67,21 @@ public class Pedido {
 
     private LocalDateTime dataPagamento;
 
+    @Column(name = "cliente_nome", length = 150)
+    private String clienteNome;
+
+    @Column(name = "cliente_telefone", length = 20)
+    private String clienteTelefone;
+
+    @Column(name = "endereco_entrega", length = 500)
+    private String enderecoEntrega;
+
+    @Column(name = "taxa_entrega", precision = 10, scale = 2)
+    private BigDecimal taxaEntrega = BigDecimal.ZERO;
+
+    @Column(name = "taxa_servico", precision = 10, scale = 2)
+    private BigDecimal taxaServico = BigDecimal.ZERO;
+
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemPedido> itens = new ArrayList<>();
 
@@ -85,12 +100,16 @@ public class Pedido {
     }
     
     public void calcularTotal() {
+        BigDecimal totalItens = BigDecimal.ZERO;
         if (itens != null) {
-            this.total = itens.stream()
+            totalItens = itens.stream()
                 .map(ItemPedido::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        } else {
-            this.total = BigDecimal.ZERO;
         }
+        
+        BigDecimal tEntrega = taxaEntrega != null ? taxaEntrega : BigDecimal.ZERO;
+        BigDecimal tServico = taxaServico != null ? taxaServico : BigDecimal.ZERO;
+        
+        this.total = totalItens.add(tEntrega).add(tServico);
     }
 }

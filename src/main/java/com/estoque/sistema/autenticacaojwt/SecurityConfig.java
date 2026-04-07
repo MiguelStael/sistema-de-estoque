@@ -32,11 +32,9 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/cardapio").permitAll()
                         .requestMatchers(HttpMethod.GET, "/imagens/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/estoque/dashboard/**", "/estoque/produtos/**", "/api/categorias/**").permitAll()
-                        .requestMatchers("/produtos/**").hasAnyRole("DONO", "FUNCIONARIO")
+                        .requestMatchers("/api/estoque/dashboard/**").permitAll() // Para testes de alerta
+                        .requestMatchers("/api/**").hasAnyRole("DONO", "FUNCIONARIO")
                         .requestMatchers("/estoque/**").hasAnyRole("DONO", "FUNCIONARIO")
-                        .requestMatchers("/turno/**").hasAnyRole("DONO", "FUNCIONARIO")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

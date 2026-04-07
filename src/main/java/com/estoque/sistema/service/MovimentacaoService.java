@@ -5,9 +5,12 @@ import com.estoque.sistema.model.Movimentacao;
 import com.estoque.sistema.model.Produto;
 import com.estoque.sistema.model.TipoMovimentacao;
 import com.estoque.sistema.repository.MovimentacaoRepository;
+import com.estoque.sistema.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.estoque.sistema.model.Usuario;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -17,6 +20,12 @@ import java.time.LocalDateTime;
 public class MovimentacaoService {
 
     private final MovimentacaoRepository movimentacaoRepository;
+    private final UsuarioRepository usuarioRepository;
+
+    private Usuario getUsuarioAutenticado() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return usuarioRepository.findByEmail(email).orElse(null);
+    }
 
     @Transactional
     public void registrarVenda(Ingrediente ingrediente, BigDecimal quantidade, String motivo) {
@@ -47,6 +56,7 @@ public class MovimentacaoService {
         mov.setTipo(tipo);
         mov.setMotivo(motivo);
         mov.setValorUnitarioCusto(valorCusto);
+        mov.setUsuario(getUsuarioAutenticado());
         movimentacaoRepository.save(mov);
     }
 

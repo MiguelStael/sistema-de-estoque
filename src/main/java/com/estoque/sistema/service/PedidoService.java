@@ -6,6 +6,7 @@ import com.estoque.sistema.model.*;
 import com.estoque.sistema.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,13 @@ public class PedidoService {
     private final ItemPedidoRepository itemPedidoRepository;
     private final MesaRepository mesaRepository;
     private final MovimentacaoService movimentacaoService;
+    private final UsuarioRepository usuarioRepository;
+
+    private Usuario getUsuarioAutenticado() {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) return null;
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return usuarioRepository.findByEmail(email).orElse(null);
+    }
 
     @Transactional
     @org.springframework.retry.annotation.Retryable(retryFor = org.springframework.orm.ObjectOptimisticLockingFailureException.class, maxAttempts = 3, backoff = @org.springframework.retry.annotation.Backoff(delay = 500))
@@ -34,6 +42,13 @@ public class PedidoService {
         pedido.setObservacao(request.getObservacao());
         pedido.setStatus(StatusPedido.PENDENTE);
         pedido.setTipoPedido(request.getTipoPedido());
+        
+        // Novos campos profissionais
+        pedido.setClienteNome(request.getClienteNome());
+        pedido.setClienteTelefone(request.getClienteTelefone());
+        pedido.setEnderecoEntrega(request.getEnderecoEntrega());
+        pedido.setTaxaEntrega(request.getTaxaEntrega() != null ? request.getTaxaEntrega() : BigDecimal.ZERO);
+        pedido.setTaxaServico(request.getTaxaServico() != null ? request.getTaxaServico() : BigDecimal.ZERO);
 
         if (request.getTipoPedido() == TipoPedido.PRESENCIAL && request.getMesaId() != null) {
             Long mesaId = java.util.Objects.requireNonNull(request.getMesaId(), "ID da mesa não pode ser nulo para pedido presencial.");
@@ -164,6 +179,14 @@ public class PedidoService {
         pedido.setIdentificacao(request.getIdentificacao());
         pedido.setObservacao(request.getObservacao());
         pedido.setTipoPedido(request.getTipoPedido());
+        
+        // Atualização dos campos profissionais na edição
+        pedido.setClienteNome(request.getClienteNome());
+        pedido.setClienteTelefone(request.getClienteTelefone());
+        pedido.setEnderecoEntrega(request.getEnderecoEntrega());
+        pedido.setTaxaEntrega(request.getTaxaEntrega() != null ? request.getTaxaEntrega() : BigDecimal.ZERO);
+        pedido.setTaxaServico(request.getTaxaServico() != null ? request.getTaxaServico() : BigDecimal.ZERO);
+
         pedido.calcularTotal();
 
         BigDecimal novoTotal = pedido.getTotal();
@@ -312,6 +335,7 @@ public class PedidoService {
         log.setPedido(pedido);
         log.setStatus(pedido.getStatus());
         log.setDescricao(descricao);
+        log.setUsuario(getUsuarioAutenticado());
         pedidoLogRepository.save(log);
     }
 
@@ -339,6 +363,11 @@ public class PedidoService {
                 .dataPagamento(p.getDataPagamento())
                 .total(p.getTotal())
                 .observacao(p.getObservacao())
+                .clienteNome(p.getClienteNome())
+                .clienteTelefone(p.getClienteTelefone())
+                .enderecoEntrega(p.getEnderecoEntrega())
+                .taxaEntrega(p.getTaxaEntrega())
+                .taxaServico(p.getTaxaServico())
                 .itens(p.getItens().stream().map(item -> ItemPedidoResponseDTO.builder()
                         .produtoId(item.getProduto().getId())
                         .produtoNome(item.getProduto().getNome())

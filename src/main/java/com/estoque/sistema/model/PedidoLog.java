@@ -34,6 +34,10 @@ public class PedidoLog {
     @Column(nullable = false, updatable = false)
     private LocalDateTime dataRegistro;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+
     @PrePersist
     protected void onCreate() {
         dataRegistro = LocalDateTime.now();
