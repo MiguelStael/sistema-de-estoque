@@ -32,6 +32,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/cardapio").permitAll()
                         .requestMatchers(HttpMethod.GET, "/imagens/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/estoque/dashboard/**").permitAll() // Para testes de alerta
                         .requestMatchers("/api/**").hasAnyRole("DONO", "FUNCIONARIO")
                         .requestMatchers("/estoque/**").hasAnyRole("DONO", "FUNCIONARIO")

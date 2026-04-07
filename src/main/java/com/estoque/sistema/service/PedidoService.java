@@ -43,7 +43,6 @@ public class PedidoService {
         pedido.setStatus(StatusPedido.PENDENTE);
         pedido.setTipoPedido(request.getTipoPedido());
         
-        // Novos campos profissionais
         pedido.setClienteNome(request.getClienteNome());
         pedido.setClienteTelefone(request.getClienteTelefone());
         pedido.setEnderecoEntrega(request.getEnderecoEntrega());
@@ -180,7 +179,6 @@ public class PedidoService {
         pedido.setObservacao(request.getObservacao());
         pedido.setTipoPedido(request.getTipoPedido());
         
-        // Atualização dos campos profissionais na edição
         pedido.setClienteNome(request.getClienteNome());
         pedido.setClienteTelefone(request.getClienteTelefone());
         pedido.setEnderecoEntrega(request.getEnderecoEntrega());

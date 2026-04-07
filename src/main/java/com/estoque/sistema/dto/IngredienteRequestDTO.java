@@ -28,4 +28,6 @@ public class IngredienteRequestDTO {
     @NotNull(message = "A quantidade mínima é obrigatória")
     @PositiveOrZero(message = "A quantidade mínima não pode ser negativa")
     private BigDecimal quantidadeMinima;
+
+    private java.time.LocalDate dataValidade;
 }

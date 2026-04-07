@@ -62,6 +62,7 @@ public class IngredienteService {
             ingrediente.setUnidadeMedida(dto.getUnidadeMedida());
             ingrediente.setCustoUnitario(dto.getCustoUnitario());
             ingrediente.setQuantidadeMinima(dto.getQuantidadeMinima());
+            ingrediente.setDataValidade(dto.getDataValidade());
             return mapToResponseDTO(ingredienteRepository.save(ingrediente));
         }).orElseThrow(() -> new ResourceNotFoundException("Ingrediente nao localizado."));
     }
@@ -90,6 +91,7 @@ public class IngredienteService {
         ingrediente.setUnidadeMedida(dto.getUnidadeMedida());
         ingrediente.setCustoUnitario(dto.getCustoUnitario());
         ingrediente.setQuantidadeMinima(dto.getQuantidadeMinima());
+        ingrediente.setDataValidade(dto.getDataValidade());
         return ingrediente;
     }
 
@@ -101,6 +103,7 @@ public class IngredienteService {
         dto.setUnidadeMedida(ingrediente.getUnidadeMedida());
         dto.setCustoUnitario(ingrediente.getCustoUnitario());
         dto.setQuantidadeMinima(ingrediente.getQuantidadeMinima());
+        dto.setDataValidade(ingrediente.getDataValidade());
         dto.setCritico(ingrediente.getQuantidade().compareTo(ingrediente.getQuantidadeMinima()) <= 0);
         return dto;
     }

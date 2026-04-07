@@ -21,6 +21,7 @@ public class MovimentacaoService {
 
     private final MovimentacaoRepository movimentacaoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final EmailService emailService;
 
     private Usuario getUsuarioAutenticado() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -58,6 +59,33 @@ public class MovimentacaoService {
         mov.setValorUnitarioCusto(valorCusto);
         mov.setUsuario(getUsuarioAutenticado());
         movimentacaoRepository.save(mov);
+
+        if (tipo.name().startsWith("SAIDA")) {
+            verificarAlertaCritico(ingrediente, produto);
+        }
+    }
+
+    private void verificarAlertaCritico(Ingrediente ingrediente, Produto produto) {
+        if (ingrediente != null && ingrediente.getQuantidade().compareTo(ingrediente.getQuantidadeMinima()) <= 0) {
+            String html = String.format(
+                "<h2 style='color: red;'>ALERTA DE ESTOQUE CRÍTICO</h2>" +
+                "<p>O item <b>%s</b> atingiu o nível crítico após uma movimentação de saída.</p>" +
+                "<p><b>Quantidade Atual:</b> %s %s</p>" +
+                "<p><b>Quantidade Mínima:</b> %s</p>",
+                ingrediente.getNome(), ingrediente.getQuantidade(), ingrediente.getUnidadeMedida(), ingrediente.getQuantidadeMinima()
+            );
+            emailService.enviarAlertaEstoqueCritico(html);
+        }
+        
+        if (produto != null && new BigDecimal(produto.getQuantidade()).compareTo(new BigDecimal(produto.getQuantidadeMinima())) <= 0) {
+            String html = String.format(
+                "<h2 style='color: red;'>ALERTA DE PRODUTO BAIXO</h2>" +
+                "<p>O produto <b>%s</b> está com poucas unidades disponíveis.</p>" +
+                "<p><b>Quantidade Atual:</b> %s</p>",
+                produto.getNome(), produto.getQuantidade()
+            );
+            emailService.enviarAlertaEstoqueCritico(html);
+        }
     }
 
     public BigDecimal calcularTotalPerdasNoPeriodo(LocalDateTime inicio, LocalDateTime fim) {

@@ -18,7 +18,8 @@ public class AlertaEstoqueDTO {
     private BigDecimal quantidadeAtual;
     private BigDecimal quantidadeMinima;
     private String unidadeMedida;
-    private String status; // "CRITICO" ou "ALERTA"
+    private String status; // "CRITICO", "ALERTA" ou "VENCENDO"
     private Double percentualRestante;
+    private java.time.LocalDate dataValidade;
 
 }

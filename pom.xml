@@ -11,8 +11,8 @@
   <groupId>com.estoque</groupId>
   <artifactId>sistema-estoque</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <name>sistema-estoque</name>
-  <description>Backend do Sistema de Estoque Moderno</description>
+  <name>core-estoque</name>
+  <description>CoreEstoque: Sistema Moderno de Gestão de Suprimentos e Pedidos</description>
 
   <properties>
     <java.version>21</java.version>
@@ -120,6 +120,11 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-mail</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>2.5.0</version>
     </dependency>
   </dependencies>
 
