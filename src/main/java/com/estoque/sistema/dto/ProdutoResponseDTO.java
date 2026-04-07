@@ -11,6 +11,7 @@ public class ProdutoResponseDTO {
     private String descricao;
     private BigDecimal preco;
     private Integer quantidade;
+    private Integer quantidadeMinima;
     private String urlImagem;
     private Boolean disponivel;
     private CategoriaResponseDTO categoria;

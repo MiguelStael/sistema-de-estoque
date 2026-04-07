@@ -34,6 +34,14 @@ public class ImageStorageService {
             return null;
         }
 
+        // Validação de tipo de arquivo
+        String contentType = file.getContentType();
+        if (contentType == null || (!contentType.equals("image/jpeg") && 
+                                    !contentType.equals("image/png") && 
+                                    !contentType.equals("image/webp"))) {
+            throw new RuntimeException("Formato de imagem inválido. Apenas JPEG, PNG e WebP são aceitos.");
+        }
+
         String originalFileName = file.getOriginalFilename();
         if (originalFileName == null) {
             throw new RuntimeException("Nome do arquivo inválido.");
@@ -60,5 +68,24 @@ public class ImageStorageService {
         }
 
         return newFileName;
+    }
+
+    public void deleteFile(String urlImagem) {
+        if (urlImagem == null || urlImagem.isBlank()) {
+            return;
+        }
+
+        try {
+            // Extrair o nome do arquivo da URL (ex: http://.../imagens/uuid.webp)
+            String fileName = urlImagem.substring(urlImagem.lastIndexOf("/") + 1);
+            Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
+
+            if (Files.exists(filePath)) {
+                Files.delete(filePath);
+            }
+        } catch (IOException ex) {
+            // Logar erro, mas permitir que o fluxo continue
+            System.err.println("Erro ao deletar arquivo: " + urlImagem);
+        }
     }
 }
