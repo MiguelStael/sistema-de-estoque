@@ -17,14 +17,12 @@ public class DataInitializer {
     CommandLineRunner initDatabase(UsuarioRepository repository, PasswordEncoder passwordEncoder) {
         return args -> {
             String adminEmail = "admin@restaurante.com";
-
             if (!repository.existsByEmail(adminEmail)) {
                 Usuario admin = new Usuario();
                 admin.setNome("Administrador Restaurante");
                 admin.setEmail(adminEmail);
                 admin.setSenha(passwordEncoder.encode("admin123"));
                 admin.setTipoPerfil(TipoPerfil.DONO);
-
                 repository.save(admin);
                 log.info("USUARIO ADMIN CRIADO: {}", adminEmail);
             }

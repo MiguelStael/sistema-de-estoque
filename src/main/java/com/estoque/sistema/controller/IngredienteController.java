@@ -3,9 +3,6 @@ package com.estoque.sistema.controller;
 import com.estoque.sistema.dto.IngredienteRequestDTO;
 import com.estoque.sistema.dto.IngredienteResponseDTO;
 import com.estoque.sistema.service.IngredienteService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +18,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/estoque/ingredientes")
-@Tag(name = "Ingredientes", description = "Controle de estoque de ingredientes e matérias-primas")
 public class IngredienteController {
 
     private final IngredienteService ingredienteService;
@@ -30,20 +26,17 @@ public class IngredienteController {
         this.ingredienteService = ingredienteService;
     }
 
-    @Operation(summary = "Listar ingredientes (paginado)")
     @GetMapping
     public ResponseEntity<Page<IngredienteResponseDTO>> listar(
-            @Parameter(hidden = true) @PageableDefault(size = 10, sort = "nome") @NonNull Pageable pageable) {
+            @PageableDefault(size = 10, sort = "nome") @NonNull Pageable pageable) {
         return ResponseEntity.ok(ingredienteService.listarTodos(pageable));
     }
 
-    @Operation(summary = "Listar ingredientes críticos")
     @GetMapping("/criticos")
     public ResponseEntity<List<IngredienteResponseDTO>> listarCriticos() {
         return ResponseEntity.ok(ingredienteService.listarCriticos());
     }
 
-    @Operation(summary = "Buscar ingrediente por ID")
     @GetMapping("/{id}")
     public ResponseEntity<IngredienteResponseDTO> buscarPorId(@PathVariable @NonNull Long id) {
         return ingredienteService.buscarPorId(id)
@@ -51,14 +44,12 @@ public class IngredienteController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @Operation(summary = "Criar ingrediente")
     @PostMapping
     public ResponseEntity<IngredienteResponseDTO> criar(@RequestBody @Valid @NonNull IngredienteRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ingredienteService.criar(dto));
     }
 
-    @Operation(summary = "Atualizar ingrediente")
     @PutMapping("/{id}")
     public ResponseEntity<IngredienteResponseDTO> atualizar(
             @PathVariable @NonNull Long id,
@@ -66,7 +57,6 @@ public class IngredienteController {
         return ResponseEntity.ok(ingredienteService.atualizar(id, dto));
     }
 
-    @Operation(summary = "Entrada de lote")
     @PatchMapping("/{id}/entrada")
     public ResponseEntity<IngredienteResponseDTO> adicionarLote(
             @PathVariable @NonNull Long id,
@@ -77,7 +67,6 @@ public class IngredienteController {
         return ResponseEntity.ok(ingredienteService.adicionarLote(id, quantidade));
     }
 
-    @Operation(summary = "Remover ingrediente")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable @NonNull Long id) {
         ingredienteService.deletar(id);

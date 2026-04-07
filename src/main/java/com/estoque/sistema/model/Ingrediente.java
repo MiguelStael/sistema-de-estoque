@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@org.hibernate.envers.Audited
 public class Ingrediente {
 
     @Id

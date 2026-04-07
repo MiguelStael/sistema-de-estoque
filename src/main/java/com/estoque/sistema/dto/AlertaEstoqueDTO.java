@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class EstoqueAlertaDTO {
+public class AlertaEstoqueDTO {
 
     private String nome;
     private String tipo; // "PRODUTO" ou "INGREDIENTE"

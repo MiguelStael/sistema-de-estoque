@@ -26,12 +26,14 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configure(http))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/cardapio").permitAll()
                         .requestMatchers(HttpMethod.GET, "/imagens/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/estoque/dashboard/**", "/estoque/produtos/**", "/api/categorias/**").permitAll()
                         .requestMatchers("/produtos/**").hasAnyRole("DONO", "FUNCIONARIO")
                         .requestMatchers("/estoque/**").hasAnyRole("DONO", "FUNCIONARIO")
                         .requestMatchers("/turno/**").hasAnyRole("DONO", "FUNCIONARIO")

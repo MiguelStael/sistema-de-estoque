@@ -18,7 +18,6 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@org.hibernate.envers.Audited
 public class Produto {
 
     @Id

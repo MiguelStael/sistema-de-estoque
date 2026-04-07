@@ -1,6 +1,6 @@
 package com.estoque.sistema.service;
 
-import com.estoque.sistema.dto.EstoqueAlertaDTO;
+import com.estoque.sistema.dto.AlertaEstoqueDTO;
 import com.estoque.sistema.model.Ingrediente;
 import com.estoque.sistema.model.Produto;
 import com.estoque.sistema.repository.IngredienteRepository;
@@ -16,62 +16,74 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class EstoqueService {
+public class MonitoramentoEstoqueService {
 
     private final IngredienteRepository ingredienteRepository;
     private final ProdutoRepository produtoRepository;
 
-    public List<EstoqueAlertaDTO> listarAlertasCriticos() {
-        List<EstoqueAlertaDTO> alertas = new ArrayList<>();
+    private static final double LIMITE_CRITICO = 30.0;
+    private static final double LIMITE_ALERTA = 60.0;
 
-        // Buscar ingredientes críticos
+    public List<AlertaEstoqueDTO> listarAlertasCriticos() {
+        List<AlertaEstoqueDTO> alertas = new ArrayList<>();
+
         alertas.addAll(ingredienteRepository.findAllCriticos().stream()
                 .map(this::mapIngredienteToAlerta)
                 .collect(Collectors.toList()));
 
-        // Buscar produtos críticos
         alertas.addAll(produtoRepository.findAllCriticos().stream()
                 .map(this::mapProdutoToAlerta)
                 .collect(Collectors.toList()));
 
-        return alertas;
+        return alertas.stream()
+                .filter(a -> !"NORMAL".equals(a.getStatus()))
+                .collect(Collectors.toList());
     }
 
-    private EstoqueAlertaDTO mapIngredienteToAlerta(Ingrediente i) {
+    private AlertaEstoqueDTO mapIngredienteToAlerta(Ingrediente i) {
         BigDecimal qtdAtual = i.getQuantidade() != null ? i.getQuantidade() : BigDecimal.ZERO;
         BigDecimal qtdMinima = i.getQuantidadeMinima() != null ? i.getQuantidadeMinima() : BigDecimal.ONE;
         
-        double percentual = qtdMinima.compareTo(BigDecimal.ZERO) > 0 
-            ? qtdAtual.divide(qtdMinima, 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).doubleValue() 
-            : 0;
+        double percentual = calcularPercentual(qtdAtual, qtdMinima);
 
-        return EstoqueAlertaDTO.builder()
+        return AlertaEstoqueDTO.builder()
                 .nome(i.getNome())
                 .tipo("INGREDIENTE")
                 .quantidadeAtual(qtdAtual)
                 .quantidadeMinima(qtdMinima)
                 .unidadeMedida(i.getUnidadeMedida().name())
                 .percentualRestante(percentual)
-                .status(percentual <= 50 ? "CRITICO" : "ALERTA")
+                .status(definirStatus(percentual))
                 .build();
     }
 
-    private EstoqueAlertaDTO mapProdutoToAlerta(Produto p) {
+    private AlertaEstoqueDTO mapProdutoToAlerta(Produto p) {
         BigDecimal qtdAtual = new BigDecimal(p.getQuantidade() != null ? p.getQuantidade() : 0);
         BigDecimal qtdMinima = new BigDecimal(p.getQuantidadeMinima() != null ? p.getQuantidadeMinima() : 1);
         
-        double percentual = qtdMinima.compareTo(BigDecimal.ZERO) > 0 
-            ? qtdAtual.divide(qtdMinima, 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).doubleValue() 
-            : 0;
+        double percentual = calcularPercentual(qtdAtual, qtdMinima);
 
-        return EstoqueAlertaDTO.builder()
+        return AlertaEstoqueDTO.builder()
                 .nome(p.getNome())
                 .tipo("PRODUTO")
                 .quantidadeAtual(qtdAtual)
                 .quantidadeMinima(qtdMinima)
                 .unidadeMedida("UNIDADE")
                 .percentualRestante(percentual)
-                .status(percentual <= 30 ? "CRITICO" : "ALERTA")
+                .status(definirStatus(percentual))
                 .build();
+    }
+
+    private double calcularPercentual(BigDecimal atual, BigDecimal minima) {
+        if (minima.compareTo(BigDecimal.ZERO) <= 0) return 0;
+        return atual.divide(minima, 4, RoundingMode.HALF_UP)
+                .multiply(new BigDecimal(100))
+                .doubleValue();
+    }
+
+    private String definirStatus(double percentual) {
+        if (percentual <= LIMITE_CRITICO) return "CRITICO";
+        if (percentual <= LIMITE_ALERTA) return "ALERTA";
+        return "NORMAL";
     }
 }

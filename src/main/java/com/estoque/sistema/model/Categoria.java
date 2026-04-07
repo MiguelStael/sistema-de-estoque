@@ -7,13 +7,10 @@ import lombok.NoArgsConstructor;
 
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
-import org.hibernate.envers.Audited;
-
 @Entity
 @Table(name = "categorias")
 @SQLDelete(sql = "UPDATE categorias SET ativa = false WHERE id = ? AND version = ?")
 @SQLRestriction("ativa = true")
-@Audited
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
