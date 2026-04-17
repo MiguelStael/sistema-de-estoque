@@ -592,6 +592,39 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Notificações",
+			"item": [
+				{
+					"name": "Enviar E-mail",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"para\": \"destinatario@exemplo.com\",\n    \"assunto\": \"Teste de Notificação Postman\",\n    \"conteudo\": \"<h1>Olá!</h1><p>Esta é uma mensagem enviada via API do Sistema de Estoque.</p>\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/notificacoes/email",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"notificacoes",
+								"email"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"auth": {

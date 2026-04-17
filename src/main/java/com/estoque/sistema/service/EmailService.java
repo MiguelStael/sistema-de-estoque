@@ -44,4 +44,25 @@ public class EmailService {
             throw new RuntimeException("Erro ao processar envio de e-mail.");
         }
     }
+
+    @Async
+    public void enviarEmailPersonalizado(com.estoque.sistema.dto.EmailRequestDTO dto) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
+                    StandardCharsets.UTF_8.name());
+
+            helper.setTo(dto.getPara());
+            helper.setSubject(dto.getAssunto());
+            helper.setText(dto.getConteudo(), true);
+            helper.setFrom("sistema@coreestoque.com");
+
+            mailSender.send(mimeMessage);
+            log.info("E-mail personalizado enviado com sucesso para: {}", dto.getPara());
+
+        } catch (MessagingException e) {
+            log.error("Falha ao enviar e-mail personalizado: {}", e.getMessage());
+            throw new RuntimeException("Erro ao processar envio de e-mail.");
+        }
+    }
 }

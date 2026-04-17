@@ -10,7 +10,10 @@ import org.hibernate.annotations.SQLRestriction;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "ingredientes")
+@Table(name = "ingredientes", indexes = {
+    @Index(name = "IndiceEstoqueIngrediente", columnList = "quantidade"),
+    @Index(name = "IndiceValidadeIngrediente", columnList = "data_validade")
+})
 @SQLDelete(sql = "UPDATE ingredientes SET ativo = false WHERE id = ? AND version = ?")
 @SQLRestriction("ativo = true")
 @Data
