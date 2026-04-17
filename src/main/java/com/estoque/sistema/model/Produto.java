@@ -12,7 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "produtos")
+@Table(name = "produtos", indexes = {
+    @Index(name = "IndiceEstoqueProduto", columnList = "quantidade")
+})
 @SQLDelete(sql = "UPDATE produtos SET ativo = false WHERE id = ? AND version = ?")
 @SQLRestriction("ativo = true")
 @Data

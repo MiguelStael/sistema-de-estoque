@@ -34,6 +34,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/imagens/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/estoque/dashboard/**").permitAll() // Para testes de alerta
+                        .requestMatchers("/api/notificacoes/**").permitAll() // Permitir envio de e-mail público
                         .requestMatchers("/api/**").hasAnyRole("DONO", "FUNCIONARIO")
                         .requestMatchers("/estoque/**").hasAnyRole("DONO", "FUNCIONARIO")
                         .anyRequest().authenticated()
