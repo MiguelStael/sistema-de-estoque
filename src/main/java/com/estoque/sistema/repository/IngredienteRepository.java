@@ -8,8 +8,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface IngredienteRepository extends JpaRepository<Ingrediente, Long> {
+public interface IngredienteRepository extends JpaRepository<Ingrediente, Long>, IngredienteRepositoryCustom {
 
-    @Query("SELECT i FROM Ingrediente i WHERE i.quantidadeMinima IS NOT NULL AND i.quantidade <= i.quantidadeMinima")
-    List<Ingrediente> findAllCriticos();
 }

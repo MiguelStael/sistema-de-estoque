@@ -11,8 +11,8 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "ingredientes", indexes = {
-    @Index(name = "IndiceEstoqueIngrediente", columnList = "quantidade"),
-    @Index(name = "IndiceValidadeIngrediente", columnList = "data_validade")
+    @Index(name = "idx_estoque_ingrediente", columnList = "quantidade"),
+    @Index(name = "idx_validade_ingrediente", columnList = "data_validade")
 })
 @SQLDelete(sql = "UPDATE ingredientes SET ativo = false WHERE id = ? AND version = ?")
 @SQLRestriction("ativo = true")

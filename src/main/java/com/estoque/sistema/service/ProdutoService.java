@@ -23,13 +23,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-@org.springframework.validation.annotation.Validated
+@Validated
 public class ProdutoService {
 
     private final ProdutoRepository produtoRepository;
@@ -107,7 +108,6 @@ public class ProdutoService {
                     produto.setUrlImagem(null);
                 }
             } else if (novaImagem != null && !novaImagem.isEmpty()) {
-                // Deletar imagem antiga se existir
                 if (produto.getUrlImagem() != null) {
                     imageStorageService.deleteFile(produto.getUrlImagem());
                 }
