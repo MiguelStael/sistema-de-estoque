@@ -14,11 +14,11 @@ import java.math.BigDecimal;
 public class AlertaEstoqueDTO {
 
     private String nome;
-    private String tipo; // "PRODUTO" ou "INGREDIENTE"
+    private String tipo;
     private BigDecimal quantidadeAtual;
     private BigDecimal quantidadeMinima;
     private String unidadeMedida;
-    private String status; // "CRITICO", "ALERTA" ou "VENCENDO"
+    private String status;
     private Double percentualRestante;
     private java.time.LocalDate dataValidade;
 

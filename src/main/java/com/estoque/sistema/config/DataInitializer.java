@@ -55,7 +55,7 @@ public class DataInitializer {
                 carne.setQuantidadeMinima(new BigDecimal("2.000"));
                 carne.setUnidadeMedida(UnidadeMedida.KG);
                 carne.setCustoUnitario(new BigDecimal("35.00"));
-                carne.setDataValidade(LocalDate.now().plusDays(2)); // VENCENDO EM 2 DIAS!
+                carne.setDataValidade(LocalDate.now().plusDays(2));
                 ingredienteRepository.save(carne);
 
                 Ingrediente pão = new Ingrediente();

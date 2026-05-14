@@ -204,7 +204,7 @@ public class PedidoService {
 
     public List<PedidoResponseDTO> listarFilaAtiva() {
         List<StatusPedido> encerrados = Arrays.asList(StatusPedido.ENTREGUE, StatusPedido.CANCELADO);
-        return pedidoRepository.findFilaAtiva(encerrados).stream()
+        return pedidoRepository.findByStatusNotInOrderByDataCriacaoAsc(encerrados).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -213,23 +213,23 @@ public class PedidoService {
         LocalDateTime inicio = LocalDateTime.of(ano, mes, 1, 0, 0);
         LocalDateTime fim = inicio.plusMonths(1).minusNanos(1);
 
-        List<com.estoque.sistema.dto.RelatorioAgregadoDTO> agregados = pedidoRepository.findFaturamentoAgregado(inicio, fim);
+        List<RelatorioAgregadoDTO> agregados = pedidoRepository.findFaturamentoAgregado(inicio, fim);
         
         BigDecimal faturamentoTotal = agregados.stream()
-                .map(com.estoque.sistema.dto.RelatorioAgregadoDTO::valor)
+                .map(RelatorioAgregadoDTO::valor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         Map<String, BigDecimal> faturamentoPorTipo = agregados.stream()
                 .collect(Collectors.groupingBy(
                         a -> a.tipoPedido().name(),
-                        Collectors.mapping(com.estoque.sistema.dto.RelatorioAgregadoDTO::valor, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
+                        Collectors.mapping(RelatorioAgregadoDTO::valor, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
                 ));
 
         Map<String, BigDecimal> faturamentoPorForma = agregados.stream()
                 .filter(a -> a.formaPagamento() != null)
                 .collect(Collectors.groupingBy(
                         a -> a.formaPagamento().name(),
-                        Collectors.mapping(com.estoque.sistema.dto.RelatorioAgregadoDTO::valor, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
+                        Collectors.mapping(RelatorioAgregadoDTO::valor, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
                 ));
 
         org.springframework.data.domain.Page<Pedido> pedidosAuditadosPage = pedidoRepository.findByDataCriacaoBetween(inicio, fim, org.springframework.data.domain.PageRequest.of(0, 50));
