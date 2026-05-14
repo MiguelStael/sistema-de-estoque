@@ -30,11 +30,12 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/cardapio").permitAll()
                         .requestMatchers(HttpMethod.GET, "/imagens/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/api/estoque/dashboard/**").permitAll() // Para testes de alerta
-                        .requestMatchers("/api/notificacoes/**").permitAll() // Permitir envio de e-mail público
+                        .requestMatchers("/api/estoque/dashboard/**").permitAll()
+                        .requestMatchers("/api/notificacoes/**").permitAll()
                         .requestMatchers("/api/**").hasAnyRole("DONO", "FUNCIONARIO")
                         .requestMatchers("/estoque/**").hasAnyRole("DONO", "FUNCIONARIO")
                         .anyRequest().authenticated()
